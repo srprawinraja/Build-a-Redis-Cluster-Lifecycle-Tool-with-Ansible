@@ -2,6 +2,8 @@ services:
   redis-node-1:
     image: redis-node
     container_name: redis-node-1
+    ports:
+      - "2221:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.11
@@ -9,6 +11,8 @@ services:
   redis-node-2:
     image: redis-node
     container_name: redis-node-2
+    ports:
+      - "2222:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.12
@@ -16,6 +20,8 @@ services:
   redis-node-3:
     image: redis-node
     container_name: redis-node-3
+    ports:
+      - "2223:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.13
@@ -23,6 +29,8 @@ services:
   redis-node-4:
     image: redis-node
     container_name: redis-node-4
+    ports:
+      - "2224:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.14
@@ -30,6 +38,8 @@ services:
   redis-node-5:
     image: redis-node
     container_name: redis-node-5
+    ports:
+      - "2225:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.15
@@ -37,6 +47,8 @@ services:
   redis-node-6:
     image: redis-node
     container_name: redis-node-6
+    ports:
+      - "2226:22"
     networks:
       redis-net:
         ipv4_address: 10.10.0.16
