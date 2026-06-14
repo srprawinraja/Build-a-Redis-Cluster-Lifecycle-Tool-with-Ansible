@@ -1,0 +1,122 @@
+prawin@LAPTOP-ESNVCJJ4:~/projects/submission$ ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1
+Redis Tool Starting...
+
+PLAY [all] *************************************************************************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************************************************************************
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-4]
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-6]
+
+TASK [Install Redis build dependencies] ********************************************************************************************************************
+ok: [redis-node-5]
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-6]
+
+TASK [Download Redis 7.0.15] *******************************************************************************************************************************
+ok: [redis-node-2]
+ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-3]
+ok: [redis-node-6]
+
+TASK [Extract Redis source] ********************************************************************************************************************************
+ok: [redis-node-2]
+ok: [redis-node-4]
+ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-3]
+ok: [redis-node-6]
+
+TASK [Compile Redis] ***************************************************************************************************************************************
+changed: [redis-node-5]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-3]
+changed: [redis-node-2]
+changed: [redis-node-6]
+
+TASK [Install Redis] ***************************************************************************************************************************************
+changed: [redis-node-1]
+changed: [redis-node-2]
+changed: [redis-node-3]
+changed: [redis-node-4]
+changed: [redis-node-5]
+changed: [redis-node-6]
+
+TASK [Create Redis config directory] ***********************************************************************************************************************
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-1]
+ok: [redis-node-4]
+ok: [redis-node-2]
+ok: [redis-node-6]
+
+TASK [Create redis.conf for cluster mode] ******************************************************************************************************************
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-2]
+ok: [redis-node-6]
+
+TASK [Start Redis server] **********************************************************************************************************************************
+changed: [redis-node-2]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-3]
+changed: [redis-node-5]
+changed: [redis-node-6]
+
+PLAY RECAP *************************************************************************************************************************************************
+redis-node-1               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+redis-node-2               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+redis-node-3               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+redis-node-4               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+redis-node-5               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+redis-node-6               : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+
+Redis Installed
+Redis Configured for Cluster Mode
+Redis Started on all nodes
+
+ version: 7.0.15
+Masters: 3
+Replicas per master: 1
+
+FINAL CLUSTER TOPOLOGY
+
+954b032d33df6b0168102f53459a1c78a0573b17 10.10.0.14:6379@16379 slave 461fe4744ecc89241519ff06876d00447b3f79fa 0 1781462969954 3 connected
+b6ec488aea34be336f9ee229ef62c1f3cb0f4ee4 10.10.0.11:6379@16379 myself,master - 0 1781462969000 1 connected 0-5460
+1676865204807698f738a5d282a441c790c5f7cf 10.10.0.16:6379@16379 slave c51c782b919ee3e17ca786411ce4cfe7a1728aa5 0 1781462968446 2 connected
+c51c782b919ee3e17ca786411ce4cfe7a1728aa5 10.10.0.12:6379@16379 master - 0 1781462969452 2 connected 5461-10922
+461fe4744ecc89241519ff06876d00447b3f79fa 10.10.0.13:6379@16379 master - 0 1781462968045 3 connected 10923-16383
+330f6fe4177330e3ed99f06e6a88cf8b11e9cdba 10.10.0.15:6379@16379 slave b6ec488aea34be336f9ee229ef62c1f3cb0f4ee4 0 1781462968548 1 connected
+
+CONNECTIVITY STATUS
+
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:6
+cluster_size:3
+cluster_current_epoch:6
+cluster_my_epoch:1
+cluster_stats_messages_ping_sent:4193
+cluster_stats_messages_pong_sent:4042
+cluster_stats_messages_sent:8235
+cluster_stats_messages_ping_received:4037
+cluster_stats_messages_pong_received:4193
+cluster_stats_messages_meet_received:5
+cluster_stats_messages_received:8235
+total_cluster_links_buffer_limit_exceeded:0
