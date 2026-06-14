@@ -3,5 +3,32 @@
   become: yes
 
   tasks:
-    - name: Verify connection
-      ping:
+    - name: Install Redis build dependencies
+      apt:
+        name:
+          - build-essential
+          - wget
+          - tcl
+        state: present
+        update_cache: yes
+
+    - name: Download Redis 7.0.15
+      get_url:
+        url: https://download.redis.io/releases/redis-7.0.15.tar.gz
+        dest: /tmp/redis-7.0.15.tar.gz
+
+    - name: Extract Redis source
+      unarchive:
+        src: /tmp/redis-7.0.15.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Compile Redis
+      command: make
+      args:
+        chdir: /tmp/redis-7.0.15
+
+    - name: Install Redis
+      command: make install
+      args:
+        chdir: /tmp/redis-7.0.15
