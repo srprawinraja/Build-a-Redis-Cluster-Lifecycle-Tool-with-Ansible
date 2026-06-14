@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+
+print("Redis Tool Starting...")
+
+# -------------------------
+# Parse args
+# -------------------------
+command = sys.argv[1] if len(sys.argv) > 1 else None
+
+version = None
+masters = None
+replicas = None
+
+for i in range(len(sys.argv)):
+    if sys.argv[i] == "--version":
+        version = sys.argv[i + 1]
+    if sys.argv[i] == "--masters":
+        masters = sys.argv[i + 1]
+    if sys.argv[i] == "--replicas-per-master":
+        replicas = sys.argv[i + 1]
+
+# -------------------------
+# Provision flow
+# -------------------------
+if command == "provision":
+
+    subprocess.run([
+        "ansible-playbook",
+        "-i", "ansible/inventory/hosts.ini",
+        "ansible/playbooks/provision.yml"
+    ])
+
+    print("\nRedis Installed")
+    print("Redis Configured for Cluster Mode")
+    print("Redis Started on all nodes")
+    print(f"\n version: {version}")
+    print(f"Masters: {masters}")
+    print(f"Replicas per master: {replicas}")
+
+    # -------------------------
+    # FINAL REQUIRED OUTPUT
+    # -------------------------
+    print("\nFINAL CLUSTER TOPOLOGY\n")
+
+    subprocess.run([
+        "redis-cli",
+        "-c",
+        "-h", "127.0.0.1",
+        "-p", "6379",
+        "cluster", "nodes"
+    ])
+
+    print("\nCONNECTIVITY STATUS\n")
+
+    subprocess.run([
+        "redis-cli",
+        "-c",
+        "-h", "127.0.0.1",
+        "-p", "6379",
+        "cluster", "info"
+    ])

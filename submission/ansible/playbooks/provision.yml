@@ -32,3 +32,27 @@
       command: make install
       args:
         chdir: /tmp/redis-7.0.15
+    - name: Create Redis config directory
+      file:
+        path: /etc/redis
+        state: directory
+
+    - name: Create redis.conf for cluster mode
+      copy:
+        dest: /etc/redis/redis.conf
+        content: |
+          port 6379
+          bind 0.0.0.0
+          protected-mode no
+
+          daemonize yes
+          dir /tmp
+
+          cluster-enabled yes
+          cluster-config-file nodes.conf
+          cluster-node-timeout 5000
+
+          appendonly yes
+
+    - name: Start Redis server
+      shell: redis-server /etc/redis/redis.conf
