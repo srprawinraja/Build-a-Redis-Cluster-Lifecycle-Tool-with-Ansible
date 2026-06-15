@@ -1,0 +1,43 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+
+Executing Comprehensive Post-Upgrade Verification...
+
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [VERIFY | Data Integrity (1000 keys)] *************************************
+changed: [redis-node-1]
+
+TASK [VERIFY | Version Consistency] ********************************************
+changed: [redis-node-1]
+
+TASK [VERIFY | Topology Health] ************************************************
+changed: [redis-node-1]
+
+TASK [VERIFY | Cluster State] **************************************************
+changed: [redis-node-1]
+
+TASK [VERIFY | Replication Lag] ************************************************
+changed: [redis-node-1]
+
+TASK [Print Verification Summary] **********************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "==================================================",
+        "             FULL VERIFICATION SUMMARY            ",
+        "==================================================",
+        "1. Data Integrity    : PASS",
+        "2. Version Consistency: PASS (All nodes on v7.2.6)",
+        "3. Topology Health   : PASS (16384 slots covered, every master has at least one replica)",
+        "4. Cluster State     : PASS (cluster_state:ok)",
+        "5. Replication Lag   : PASS (All replicas have master_link_status:up)",
+        "=================================================="
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
