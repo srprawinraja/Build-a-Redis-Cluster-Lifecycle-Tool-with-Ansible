@@ -140,6 +140,22 @@ if module == "status":
 
 
 # -------------------------
+# VERIFY FLOW
+# -------------------------
+if module == "verify":
+    if "--full" in args:
+        print("\nExecuting Comprehensive Post-Upgrade Verification...\n")
+        subprocess.run([
+            "ansible-playbook",
+            "-i", "ansible/inventory/hosts.ini",
+            "ansible/playbooks/verify.yml"
+        ])
+    else:
+        print("Usage: ./redis-tool verify --full")
+        sys.exit(1)
+
+
+# -------------------------
 # UPGRADE FLOW
 # -------------------------
 if module == "upgrade":

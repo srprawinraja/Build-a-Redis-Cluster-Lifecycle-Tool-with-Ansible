@@ -1,0 +1,133 @@
+---
+# ============================================================
+# Phase 5: Full Cluster Verification
+# ============================================================
+- hosts: redis-node-1
+  gather_facts: no
+  become: yes
+
+  tasks:
+    # --------------------------------------------------------
+    # Check 1: Data Integrity
+    # --------------------------------------------------------
+    - name: "VERIFY | Data Integrity (1000 keys)"
+      shell: |
+        total=1000
+        missing=0
+        mismatch=0
+        for i in $(seq -w 1 1000); do
+          key="key:${i}"
+          expected=$(printf "%s" "${key}" | sha256sum | awk '{print $1}')
+          actual=$(redis-cli -c -h 127.0.0.1 -p 6379 GET "${key}" 2>/dev/null)
+          if [ -z "$actual" ]; then
+            missing=$((missing + 1))
+          elif [ "$actual" != "$expected" ]; then
+            mismatch=$((mismatch + 1))
+          fi
+        done
+        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
+          echo "PASS"
+        else
+          echo "FAIL (${missing} keys missing, ${mismatch} values mismatched)"
+        fi
+      args:
+        executable: /bin/bash
+      register: check_data
+
+    # --------------------------------------------------------
+    # Check 2: Version Consistency
+    # --------------------------------------------------------
+    - name: "VERIFY | Version Consistency"
+      shell: |
+        versions_list=$(redis-cli -h 127.0.0.1 -p 6379 cluster nodes | while read line; do
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          ip=$(echo "$addr" | cut -d':' -f1)
+          port=$(echo "$addr" | cut -d':' -f2)
+          redis-cli -h "$ip" -p "$port" info server 2>/dev/null | grep "^redis_version:" | cut -d: -f2 | tr -d '\r'
+        done | sort -u)
+        
+        count=$(echo "$versions_list" | wc -l)
+        version_str=$(echo "$versions_list" | paste -sd ", " -)
+        
+        if [ "$count" -eq 1 ]; then
+          echo "PASS (All nodes on v${version_str})"
+        else
+          echo "FAIL (Multiple versions found: ${version_str})"
+        fi
+      args:
+        executable: /bin/bash
+      register: check_version
+
+    # --------------------------------------------------------
+    # Check 3: Topology Health
+    # --------------------------------------------------------
+    - name: "VERIFY | Topology Health"
+      shell: |
+        masters_count=$(redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk '$3 ~ /master/ {print $1}' | wc -l)
+        replicas_with_masters=$(redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk '$3 ~ /slave/ && $4 != "-" {print $4}' | sort -u | wc -l)
+        slots_ok=$(redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_slots_ok:16384" | wc -l)
+        
+        if [ "$masters_count" -eq "$replicas_with_masters" ] && [ "$slots_ok" -eq 1 ]; then
+          echo "PASS (16384 slots covered, every master has at least one replica)"
+        else
+          echo "FAIL (Masters count: ${masters_count}, Unique replica masters: ${replicas_with_masters}, Slots OK: ${slots_ok})"
+        fi
+      args:
+        executable: /bin/bash
+      register: check_topology
+
+    # --------------------------------------------------------
+    # Check 4: Cluster State
+    # --------------------------------------------------------
+    - name: "VERIFY | Cluster State"
+      shell: |
+        state=$(redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok" | wc -l)
+        if [ "$state" -eq 1 ]; then
+          echo "PASS (cluster_state:ok)"
+        else
+          echo "FAIL (cluster is in fail state)"
+        fi
+      args:
+        executable: /bin/bash
+      register: check_state
+
+    # --------------------------------------------------------
+    # Check 5: Replication Lag
+    # --------------------------------------------------------
+    - name: "VERIFY | Replication Lag"
+      shell: |
+        lag_fail=0
+        while read line; do
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          ip=$(echo "$addr" | cut -d':' -f1)
+          port=$(echo "$addr" | cut -d':' -f2)
+          status=$(redis-cli -h "$ip" -p "$port" info replication 2>/dev/null | grep "^master_link_status:" | cut -d: -f2 | tr -d '[:space:]')
+          if [ "$status" != "up" ]; then
+            lag_fail=$((lag_fail + 1))
+          fi
+        done < <(redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk '$3 ~ /slave/')
+        
+        if [ "$lag_fail" -eq 0 ]; then
+          echo "PASS (All replicas have master_link_status:up)"
+        else
+          echo "FAIL (${lag_fail} replica(s) link status is down)"
+        fi
+      args:
+        executable: /bin/bash
+      register: check_lag
+
+    # --------------------------------------------------------
+    # Display PASS/FAIL Summary Table
+    # --------------------------------------------------------
+    - name: Print Verification Summary
+      debug:
+        msg:
+          - "=================================================="
+          - "             FULL VERIFICATION SUMMARY            "
+          - "=================================================="
+          - "1. Data Integrity    : {{ check_data.stdout }}"
+          - "2. Version Consistency: {{ check_version.stdout }}"
+          - "3. Topology Health   : {{ check_topology.stdout }}"
+          - "4. Cluster State     : {{ check_state.stdout }}"
+          - "5. Replication Lag   : {{ check_lag.stdout }}"
+          - "=================================================="
