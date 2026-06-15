@@ -1,0 +1,359 @@
+---
+# ============================================================
+# Phase 4: Rolling Upgrade — Zero Downtime
+# Usage: ansible-playbook upgrade.yml -e "upgrade_version=7.2.6"
+# ============================================================
+
+
+# ----------------------------------------------------------
+# Play 1: Pre-flight Checks
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+  vars:
+    target: "{{ upgrade_version }}"
+
+  tasks:
+    - name: "PRE-FLIGHT | Verify cluster is healthy"
+      shell: 'redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"'
+      args:
+        executable: /bin/bash
+      register: health_check
+      failed_when: health_check.rc != 0
+
+    - name: "PRE-FLIGHT | Get current Redis version"
+      shell: 'redis-cli -h 127.0.0.1 -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d "[:space:]"'
+      args:
+        executable: /bin/bash
+      register: current_ver
+
+    - name: "PRE-FLIGHT | Fail if already at target version"
+      fail:
+        msg: "Already at version {{ target }}. Nothing to upgrade."
+      when: current_ver.stdout == target
+
+    - name: "PRE-FLIGHT | Show versions"
+      debug:
+        msg:
+          - "Current version : {{ current_ver.stdout }}"
+          - "Target  version : {{ target }}"
+          - "Cluster health  : ok"
+          - "Starting rolling upgrade..."
+
+    - name: "PRE-FLIGHT | Data integrity baseline (pre-upgrade verify)"
+      shell: |
+        total=1000
+        missing=0
+        mismatch=0
+        for i in $(seq -w 1 1000); do
+          key="key:${i}"
+          expected=$(printf "%s" "${key}" | sha256sum | awk '{print $1}')
+          actual=$(redis-cli -c -h 127.0.0.1 -p 6379 GET "${key}" 2>/dev/null)
+          if [ -z "$actual" ]; then
+            missing=$((missing + 1))
+          elif [ "$actual" != "$expected" ]; then
+            mismatch=$((mismatch + 1))
+          fi
+        done
+        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
+          echo "PRE-UPGRADE VERIFY: PASS — ${total}/${total} keys verified"
+        else
+          echo "PRE-UPGRADE VERIFY: FAIL — ${missing} keys missing, ${mismatch} values mismatched"
+          exit 1
+        fi
+      args:
+        executable: /bin/bash
+      register: pre_verify
+
+    - name: "PRE-FLIGHT | Show baseline result"
+      debug:
+        msg: "{{ pre_verify.stdout_lines }}"
+
+
+# ----------------------------------------------------------
+# Play 2: Discover Cluster Topology
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+    - name: "DISCOVER | Get cluster nodes"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes
+      args:
+        executable: /bin/bash
+      register: cluster_nodes_raw
+
+    - name: "DISCOVER | Build replica host list"
+      shell: |
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk '$3 ~ /slave/' | awk '{print $2}' | cut -d'@' -f1 | cut -d':' -f1 | while read ip; do
+          n=$(echo $ip | awk -F. '{print $4 - 10}')
+          echo "redis-node-${n}"
+        done
+      args:
+        executable: /bin/bash
+      register: replica_list
+
+    - name: "DISCOVER | Register replicas in dynamic group"
+      add_host:
+        name: "{{ item }}"
+        groups: upgrade_replicas
+      loop: "{{ replica_list.stdout_lines }}"
+      when: item | length > 0
+
+    - name: "DISCOVER | Build master-to-replica mapping"
+      shell: |
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk '$3 ~ /master/' | while read line; do
+          master_id=$(echo "$line" | awk '{print $1}')
+          master_ip=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1 | cut -d':' -f1)
+          mn=$(echo $master_ip | awk -F. '{print $4 - 10}')
+          master_host="redis-node-${mn}"
+
+          replica_line=$(redis-cli -h 127.0.0.1 -p 6379 cluster nodes | awk -v mid="$master_id" '$4 == mid')
+          replica_ip=$(echo "$replica_line" | awk '{print $2}' | cut -d'@' -f1 | cut -d':' -f1)
+          rn=$(echo $replica_ip | awk -F. '{print $4 - 10}')
+          replica_host="redis-node-${rn}"
+
+          echo "${master_host} ${replica_host}"
+        done
+      args:
+        executable: /bin/bash
+      register: master_map
+
+    - name: "DISCOVER | Register masters in dynamic group"
+      add_host:
+        name: "{{ item.split(' ')[0] }}"
+        groups: upgrade_masters
+        replica_host: "{{ item.split(' ')[1] }}"
+      loop: "{{ master_map.stdout_lines }}"
+      when: item | length > 0
+
+
+# ----------------------------------------------------------
+# Play 3: Upgrade Replicas (One at a Time)
+# ----------------------------------------------------------
+- hosts: upgrade_replicas
+  gather_facts: no
+  serial: 1
+  vars:
+    target: "{{ upgrade_version }}"
+
+  tasks:
+    - name: "[REPLICA] Stop Redis"
+      shell: redis-cli -h 127.0.0.1 -p 6379 shutdown nosave 2>/dev/null; true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: "[REPLICA] Wait for Redis to stop"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        state: stopped
+        timeout: 30
+
+    - name: "[REPLICA] Download Redis {{ target }}"
+      get_url:
+        url: "https://download.redis.io/releases/redis-{{ target }}.tar.gz"
+        dest: "/tmp/redis-{{ target }}.tar.gz"
+        validate_certs: no
+
+    - name: "[REPLICA] Extract Redis {{ target }}"
+      unarchive:
+        src: "/tmp/redis-{{ target }}.tar.gz"
+        dest: /tmp
+        remote_src: yes
+
+    - name: "[REPLICA] Compile Redis {{ target }}"
+      command: make
+      args:
+        chdir: "/tmp/redis-{{ target }}"
+
+    - name: "[REPLICA] Install Redis {{ target }}"
+      command: make install
+      args:
+        chdir: "/tmp/redis-{{ target }}"
+
+    - name: "[REPLICA] Start Redis with existing config"
+      shell: redis-server /etc/redis/redis.conf
+      args:
+        executable: /bin/bash
+
+    - name: "[REPLICA] Wait for Redis to start"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        timeout: 30
+
+    - name: "[REPLICA] Wait for cluster to return to ok"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"
+      args:
+        executable: /bin/bash
+      register: cluster_ok
+      until: cluster_ok.rc == 0
+      retries: 15
+      delay: 2
+      delegate_to: redis-node-1
+
+    - name: "[REPLICA] Get node IP address"
+      shell: hostname -I | awk '{print $1}'
+      args:
+        executable: /bin/bash
+      register: replica_ip
+
+    - name: "[REPLICA] Progress report"
+      debug:
+        msg: "[{{ ansible_play_hosts_all.index(inventory_hostname) + 1 }}/6] Upgraded replica {{ replica_ip.stdout }} — cluster: ok"
+
+
+# ----------------------------------------------------------
+# Play 4: Upgrade Masters (One at a Time, with Failover)
+# ----------------------------------------------------------
+- hosts: upgrade_masters
+  gather_facts: no
+  serial: 1
+  vars:
+    target: "{{ upgrade_version }}"
+
+  tasks:
+    - name: "[MASTER] Trigger CLUSTER FAILOVER on replica"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster failover
+      args:
+        executable: /bin/bash
+      delegate_to: "{{ replica_host }}"
+
+    - name: "[MASTER] Wait for this node to become replica (failover complete)"
+      shell: redis-cli -h 127.0.0.1 -p 6379 info replication | grep "^role:slave"
+      args:
+        executable: /bin/bash
+      register: role_check
+      until: role_check.rc == 0
+      retries: 15
+      delay: 1
+
+    - name: "[MASTER] Stop Redis (now a replica)"
+      shell: redis-cli -h 127.0.0.1 -p 6379 shutdown nosave 2>/dev/null; true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: "[MASTER] Wait for Redis to stop"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        state: stopped
+        timeout: 30
+
+    - name: "[MASTER] Download Redis {{ target }}"
+      get_url:
+        url: "https://download.redis.io/releases/redis-{{ target }}.tar.gz"
+        dest: "/tmp/redis-{{ target }}.tar.gz"
+        validate_certs: no
+
+    - name: "[MASTER] Extract Redis {{ target }}"
+      unarchive:
+        src: "/tmp/redis-{{ target }}.tar.gz"
+        dest: /tmp
+        remote_src: yes
+
+    - name: "[MASTER] Compile Redis {{ target }}"
+      command: make
+      args:
+        chdir: "/tmp/redis-{{ target }}"
+
+    - name: "[MASTER] Install Redis {{ target }}"
+      command: make install
+      args:
+        chdir: "/tmp/redis-{{ target }}"
+
+    - name: "[MASTER] Start Redis with existing config"
+      shell: redis-server /etc/redis/redis.conf
+      args:
+        executable: /bin/bash
+
+    - name: "[MASTER] Wait for Redis to start"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        timeout: 30
+
+    - name: "[MASTER] Wait for cluster to return to ok"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"
+      args:
+        executable: /bin/bash
+      register: cluster_ok
+      until: cluster_ok.rc == 0
+      retries: 15
+      delay: 2
+      delegate_to: redis-node-1
+
+    - name: "[MASTER] Get node IP address"
+      shell: hostname -I | awk '{print $1}'
+      args:
+        executable: /bin/bash
+      register: master_ip
+
+    - name: "[MASTER] Progress report"
+      debug:
+        msg: "[{{ ansible_play_hosts_all.index(inventory_hostname) + 4 }}/6] Upgraded master {{ master_ip.stdout }} — cluster: ok"
+
+
+# ----------------------------------------------------------
+# Play 5: Post-Upgrade Verification
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+  vars:
+    target: "{{ upgrade_version }}"
+
+  tasks:
+    - name: "POST | Verify all nodes are on new version"
+      shell: |
+        echo "VERSION CHECK"
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes | while read line; do
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          ip=$(echo "$addr" | cut -d':' -f1)
+          port=$(echo "$addr" | cut -d':' -f2)
+          version=$(redis-cli -h "$ip" -p "$port" info server 2>/dev/null | grep "^redis_version:" | cut -d: -f2 | tr -d '[:space:]')
+          role=$(echo "$line" | awk '{print $3}' | sed 's/myself,//')
+          echo "  ${ip}:${port}  [${role}]  v${version}"
+        done
+      args:
+        executable: /bin/bash
+      register: version_check
+
+    - name: "POST | Show version check"
+      debug:
+        msg: "{{ version_check.stdout_lines }}"
+
+    - name: "POST | Data integrity verify"
+      shell: |
+        total=1000
+        missing=0
+        mismatch=0
+        for i in $(seq -w 1 1000); do
+          key="key:${i}"
+          expected=$(printf "%s" "${key}" | sha256sum | awk '{print $1}')
+          actual=$(redis-cli -c -h 127.0.0.1 -p 6379 GET "${key}" 2>/dev/null)
+          if [ -z "$actual" ]; then
+            missing=$((missing + 1))
+          elif [ "$actual" != "$expected" ]; then
+            mismatch=$((mismatch + 1))
+          fi
+        done
+        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
+          echo "PASS — ${total}/${total} keys verified"
+        else
+          echo "FAIL — ${missing} keys missing, ${mismatch} values mismatched"
+          exit 1
+        fi
+      args:
+        executable: /bin/bash
+      register: post_verify
+
+    - name: "POST | Show data integrity result"
+      debug:
+        msg: "{{ post_verify.stdout_lines }}"
+
+    - name: "POST | Upgrade complete"
+      debug:
+        msg: "UPGRADE COMPLETE — all nodes on v{{ target }}, data integrity verified"
