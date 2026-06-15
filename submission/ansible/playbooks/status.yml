@@ -1,0 +1,61 @@
+---
+- hosts: redis-node-1
+  gather_facts: no
+  vars:
+    redis_host: "127.0.0.1"
+    redis_port: 6379
+
+  tasks:
+    - name: Collect Redis Cluster Status
+      shell: |
+        # --- Cluster State ---
+        cluster_state=$(redis-cli -h {{ redis_host }} -p {{ redis_port }} cluster info \
+          | grep "^cluster_state:" | cut -d: -f2 | tr -d '[:space:]')
+        echo "Cluster State: $cluster_state"
+        echo ""
+
+        masters_out=""
+        replicas_out=""
+
+        # --- Parse each node ---
+        while IFS= read -r line; do
+          node_id=$(echo "$line" | awk '{print $1}')
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          node_ip=$(echo "$addr" | cut -d':' -f1)
+          node_port=$(echo "$addr" | cut -d':' -f2)
+          flags=$(echo "$line" | awk '{print $3}')
+          master_id=$(echo "$line" | awk '{print $4}')
+
+          # Get Redis version
+          version=$(redis-cli -h "$node_ip" -p "$node_port" info server 2>/dev/null \
+            | grep "^redis_version:" | cut -d: -f2 | tr -d '[:space:]')
+
+          # Get memory usage
+          mem=$(redis-cli -h "$node_ip" -p "$node_port" info memory 2>/dev/null \
+            | grep "^used_memory_human:" | cut -d: -f2 | tr -d '[:space:]')
+
+          if echo "$flags" | grep -q "master"; then
+            # Master: get slot range and key count
+            slots=$(echo "$line" | awk '{print $9}')
+            keys=$(redis-cli -h "$node_ip" -p "$node_port" dbsize 2>/dev/null)
+            masters_out="${masters_out}  ${node_ip}:${node_port}  [master]  v${version}  slots: ${slots}  keys: ${keys}  mem: ${mem}\n"
+          else
+            # Replica: find which master it replicates
+            master_addr=$(redis-cli -h {{ redis_host }} -p {{ redis_port }} cluster nodes \
+              | awk -v mid="$master_id" '$1 == mid {print $2}' | cut -d'@' -f1)
+            replicas_out="${replicas_out}  ${node_ip}:${node_port}  [replica]  v${version}  replicating: ${master_addr}  mem: ${mem}\n"
+          fi
+        done < <(redis-cli -h {{ redis_host }} -p {{ redis_port }} cluster nodes)
+
+        echo "MASTERS"
+        printf "%b" "$masters_out"
+        echo ""
+        echo "REPLICAS"
+        printf "%b" "$replicas_out"
+      args:
+        executable: /bin/bash
+      register: status_result
+
+    - name: Show cluster status
+      debug:
+        msg: "{{ status_result.stdout_lines }}"

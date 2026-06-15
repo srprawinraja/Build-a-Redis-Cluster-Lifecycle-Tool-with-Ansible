@@ -1,21 +1,14 @@
 ---
+# Play 1: Install, configure and start Redis on ALL 6 nodes
 - hosts: all
   become: yes
 
   tasks:
-    - name: Install Redis build dependencies
-      apt:
-        name:
-          - build-essential
-          - wget
-          - tcl
-        state: present
-        update_cache: yes
-
     - name: Download Redis 7.0.15
       get_url:
         url: https://download.redis.io/releases/redis-7.0.15.tar.gz
         dest: /tmp/redis-7.0.15.tar.gz
+        validate_certs: no
 
     - name: Extract Redis source
       unarchive:
@@ -32,6 +25,7 @@
       command: make install
       args:
         chdir: /tmp/redis-7.0.15
+
     - name: Create Redis config directory
       file:
         path: /etc/redis
@@ -54,5 +48,66 @@
 
           appendonly yes
 
-    - name: Start Redis server
-      shell: redis-server /etc/redis/redis.conf
+    - name: Start Redis server (skip if already running)
+      shell: |
+        if redis-cli -h 127.0.0.1 -p 6379 ping 2>/dev/null | grep -q PONG; then
+          echo "Redis already running"
+        else
+          redis-server /etc/redis/redis.conf
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Wait for Redis to be ready
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        timeout: 30
+
+
+# Play 2: Form the cluster (runs on redis-node-1 only, after all nodes are up)
+- hosts: redis-node-1
+  become: yes
+
+  tasks:
+    - name: Check if cluster is already formed
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"
+      register: cluster_check
+      failed_when: false
+      changed_when: false
+      args:
+        executable: /bin/bash
+
+    - name: Form Redis Cluster (3 masters + 3 replicas)
+      shell: |
+        redis-cli --cluster create \
+          10.10.0.11:6379 \
+          10.10.0.12:6379 \
+          10.10.0.13:6379 \
+          10.10.0.14:6379 \
+          10.10.0.15:6379 \
+          10.10.0.16:6379 \
+          --cluster-replicas 1 \
+          --cluster-yes
+      when: cluster_check.rc != 0
+      args:
+        executable: /bin/bash
+
+    - name: Wait for cluster state to be ok
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"
+      register: cluster_ready
+      until: cluster_ready.rc == 0
+      retries: 10
+      delay: 2
+      args:
+        executable: /bin/bash
+
+    - name: Show final cluster topology
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes
+      register: topology
+      args:
+        executable: /bin/bash
+
+    - name: Print cluster topology
+      debug:
+        msg: "{{ topology.stdout_lines }}"

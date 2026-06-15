@@ -28,6 +28,8 @@
         else
           echo "FAIL — ${missing} keys missing, ${mismatch} values mismatched"
         fi
+      args:
+        executable: /bin/bash
       register: verify_result
 
     - name: Show verify result

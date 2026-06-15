@@ -5,6 +5,8 @@ services:
     ports:
       - "2221:22"
       - "6379:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.11
@@ -15,6 +17,8 @@ services:
     ports:
       - "2222:22"
       - "6380:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.12
@@ -25,6 +29,8 @@ services:
     ports:
       - "2223:22"
       - "6381:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.13
@@ -35,6 +41,8 @@ services:
     ports:
       - "2224:22"
       - "6382:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.14
@@ -45,6 +53,8 @@ services:
     ports:
       - "2225:22"
       - "6383:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.15
@@ -55,6 +65,8 @@ services:
     ports:
       - "2226:22"
       - "6384:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
     networks:
       redis-net:
         ipv4_address: 10.10.0.16
