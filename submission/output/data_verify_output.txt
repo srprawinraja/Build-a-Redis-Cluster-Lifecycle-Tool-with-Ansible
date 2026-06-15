@@ -1,0 +1,24 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+
+Verifying keys in Redis Cluster via Ansible...
+
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Verify 1000 keys in Redis Cluster] ***************************************
+changed: [redis-node-1]
+
+TASK [Show verify result] ******************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "",
+        "PASS — 1000/1000 keys verified"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

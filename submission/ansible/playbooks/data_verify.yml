@@ -1,0 +1,35 @@
+---
+- hosts: redis-node-1
+  gather_facts: no
+  vars:
+    total_keys: 1000
+    redis_host: "127.0.0.1"
+    redis_port: 6379
+
+  tasks:
+    - name: Verify {{ total_keys }} keys in Redis Cluster
+      shell: |
+        total={{ total_keys }}
+        missing=0
+        mismatch=0
+        for i in $(seq -w 1 {{ total_keys }}); do
+          key="key:${i}"
+          expected=$(printf "%s" "${key}" | sha256sum | awk '{print $1}')
+          actual=$(redis-cli -c -h {{ redis_host }} -p {{ redis_port }} GET "${key}" 2>/dev/null)
+          if [ -z "$actual" ]; then
+            missing=$((missing + 1))
+          elif [ "$actual" != "$expected" ]; then
+            mismatch=$((mismatch + 1))
+          fi
+        done
+        echo ""
+        if [ "$missing" -eq 0 ] && [ "$mismatch" -eq 0 ]; then
+          echo "PASS — ${total}/${total} keys verified"
+        else
+          echo "FAIL — ${missing} keys missing, ${mismatch} values mismatched"
+        fi
+      register: verify_result
+
+    - name: Show verify result
+      debug:
+        msg: "{{ verify_result.stdout_lines }}"

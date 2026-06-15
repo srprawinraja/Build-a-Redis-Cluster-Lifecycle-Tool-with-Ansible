@@ -1,0 +1,38 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+
+Seeding 1000 keys into Redis Cluster via Ansible...
+
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Seed 1000 keys into Redis Cluster] ***************************************
+changed: [redis-node-1]
+
+TASK [Show seed summary] *******************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "DATA SEED SUMMARY",
+        "Total inserted: 1000",
+        "Failures: 0"
+    ]
+}
+
+TASK [Get key distribution across masters] *************************************
+changed: [redis-node-1]
+
+TASK [Show distribution] *******************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "DISTRIBUTION",
+        "10.10.0.12:6379 -> 324 keys",
+        "10.10.0.15:6379 -> 333 keys",
+        "10.10.0.13:6379 -> 343 keys"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
