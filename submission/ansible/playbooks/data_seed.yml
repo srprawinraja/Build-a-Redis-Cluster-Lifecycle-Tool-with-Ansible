@@ -1,0 +1,47 @@
+---
+- hosts: redis-node-1
+  gather_facts: no
+  vars:
+    keys: "{{ seed_keys | default(1000) | int }}"
+    redis_host: "127.0.0.1"
+    redis_port: 6379
+
+  tasks:
+    - name: Seed {{ keys }} keys into Redis Cluster
+      shell: |
+        success=0
+        fail=0
+        for i in $(seq -w 1 {{ keys }}); do
+          key="key:${i}"
+          value=$(printf "%s" "${key}" | sha256sum | awk '{print $1}')
+          result=$(redis-cli -c -h {{ redis_host }} -p {{ redis_port }} SET "${key}" "${value}" 2>&1)
+          if [ "$result" = "OK" ]; then
+            success=$((success + 1))
+          else
+            fail=$((fail + 1))
+          fi
+        done
+        echo "DATA SEED SUMMARY"
+        echo "Total inserted: $success"
+        echo "Failures: $fail"
+      register: seed_result
+
+    - name: Show seed summary
+      debug:
+        msg: "{{ seed_result.stdout_lines }}"
+
+    - name: Get key distribution across masters
+      shell: |
+        echo "DISTRIBUTION"
+        redis-cli -c -h {{ redis_host }} -p {{ redis_port }} cluster nodes | grep "master" | while read line; do
+          node_addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          node_ip=$(echo "$node_addr" | cut -d':' -f1)
+          node_port=$(echo "$node_addr" | cut -d':' -f2)
+          count=$(redis-cli -h "$node_ip" -p "$node_port" dbsize)
+          echo "${node_ip}:${node_port} -> ${count} keys"
+        done
+      register: dist_result
+
+    - name: Show distribution
+      debug:
+        msg: "{{ dist_result.stdout_lines }}"
