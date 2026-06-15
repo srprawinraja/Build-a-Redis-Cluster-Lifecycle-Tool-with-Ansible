@@ -24,6 +24,8 @@
         echo "DATA SEED SUMMARY"
         echo "Total inserted: $success"
         echo "Failures: $fail"
+      args:
+        executable: /bin/bash
       register: seed_result
 
     - name: Show seed summary

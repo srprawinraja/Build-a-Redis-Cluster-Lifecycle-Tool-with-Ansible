@@ -97,6 +97,20 @@ def handle_verify():
 
 
 # -------------------------
+# STATUS
+# -------------------------
+def handle_status():
+
+    print("\nFetching Redis Cluster Status via Ansible...\n")
+
+    subprocess.run([
+        "ansible-playbook",
+        "-i", "ansible/inventory/hosts.ini",
+        "ansible/playbooks/status.yml"
+    ])
+
+
+# -------------------------
 # CLI PARSER
 # -------------------------
 args = sys.argv[1:]
@@ -116,6 +130,13 @@ if module == "data":
         handle_seed(args)
     elif action == "verify":
         handle_verify()
+
+
+# -------------------------
+# STATUS COMMAND ROUTER
+# -------------------------
+if module == "status":
+    handle_status()
 
 
 # -------------------------

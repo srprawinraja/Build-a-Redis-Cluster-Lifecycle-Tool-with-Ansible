@@ -1,0 +1,33 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+
+Fetching Redis Cluster Status via Ansible...
+
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [Collect Redis Cluster Status] ********************************************
+changed: [redis-node-1]
+
+TASK [Show cluster status] *****************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "Cluster State: ok",
+        "",
+        "MASTERS",
+        "  10.10.0.12:6379  [master]  v7.0.15  slots: 5461-10922  keys: 324  mem: 1.91M",
+        "  10.10.0.15:6379  [master]  v7.0.15  slots: 0-5460  keys: 333  mem: 1.91M",
+        "  10.10.0.13:6379  [master]  v7.0.15  slots: 10923-16383  keys: 343  mem: 1.91M",
+        "",
+        "REPLICAS",
+        "  10.10.0.16:6379  [replica]  v7.0.15  replicating: 10.10.0.12:6379  mem: 1.82M",
+        "  10.10.0.14:6379  [replica]  v7.0.15  replicating: 10.10.0.13:6379  mem: 1.82M",
+        "  10.10.0.11:6379  [replica]  v7.0.15  replicating: 10.10.0.15:6379  mem: 1.96M"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
