@@ -140,6 +140,30 @@ if module == "status":
 
 
 # -------------------------
+# UPGRADE FLOW
+# -------------------------
+if module == "upgrade":
+
+    target_version = None
+    strategy = None
+
+    for i in range(len(args)):
+        if args[i] == "--target-version":
+            target_version = args[i + 1]
+        if args[i] == "--strategy":
+            strategy = args[i + 1]
+
+    print(f"\nStarting Rolling Upgrade → Redis {target_version}\n")
+
+    subprocess.run([
+        "ansible-playbook",
+        "-i", "ansible/inventory/hosts.ini",
+        "ansible/playbooks/upgrade.yml",
+        "-e", f"upgrade_version={target_version}"
+    ])
+
+
+# -------------------------
 # PROVISION FLOW
 # -------------------------
 if module == "provision":
