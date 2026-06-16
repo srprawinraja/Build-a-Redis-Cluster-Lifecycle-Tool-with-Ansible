@@ -38,12 +38,12 @@
             # Master: get slot range and key count
             slots=$(echo "$line" | awk '{print $9}')
             keys=$(redis-cli -h "$node_ip" -p "$node_port" dbsize 2>/dev/null)
-            masters_out="${masters_out}  ${node_ip}:${node_port}  [master]  v${version}  slots: ${slots}  keys: ${keys}  mem: ${mem}\n"
+            masters_out="${masters_out}  ${node_ip}:${node_port}  [master]  v${version}  id:${node_id}  slots: ${slots}  keys: ${keys}  mem: ${mem}\n"
           else
             # Replica: find which master it replicates
             master_addr=$(redis-cli -h {{ redis_host }} -p {{ redis_port }} cluster nodes \
               | awk -v mid="$master_id" '$1 == mid {print $2}' | cut -d'@' -f1)
-            replicas_out="${replicas_out}  ${node_ip}:${node_port}  [replica]  v${version}  replicating: ${master_addr}  mem: ${mem}\n"
+            replicas_out="${replicas_out}  ${node_ip}:${node_port}  [replica]  v${version}  id:${node_id}  replicating: ${master_addr}  mem: ${mem}\n"
           fi
         done < <(redis-cli -h {{ redis_host }} -p {{ redis_port }} cluster nodes)
 
