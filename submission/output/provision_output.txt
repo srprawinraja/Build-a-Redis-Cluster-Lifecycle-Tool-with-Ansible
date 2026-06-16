@@ -3,79 +3,137 @@
 Proceeding...
 
 
-PLAY [all] *********************************************************************
+PLAY [redis_nodes] *************************************************************
 
 TASK [Gathering Facts] *********************************************************
-ok: [redis-node-2]
 ok: [redis-node-3]
+ok: [redis-node-2]
+ok: [redis-node-4]
 ok: [redis-node-1]
 ok: [redis-node-5]
-ok: [redis-node-4]
 ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
 
-TASK [Download Redis 7.0.15] ***************************************************
-ok: [redis-node-2]
+TASK [redis : REDIS ROLE | Check if Redis 7.0.15 binary already compiled] ******
 ok: [redis-node-1]
 ok: [redis-node-4]
-ok: [redis-node-5]
 ok: [redis-node-3]
-ok: [redis-node-6]
-
-TASK [Extract Redis source] ****************************************************
-changed: [redis-node-2]
-changed: [redis-node-5]
-changed: [redis-node-4]
-changed: [redis-node-1]
-changed: [redis-node-3]
-changed: [redis-node-6]
-
-TASK [Compile Redis] ***********************************************************
-changed: [redis-node-4]
-changed: [redis-node-3]
-changed: [redis-node-5]
-changed: [redis-node-1]
-changed: [redis-node-2]
-changed: [redis-node-6]
-
-TASK [Install Redis] ***********************************************************
-changed: [redis-node-1]
-changed: [redis-node-2]
-changed: [redis-node-5]
-changed: [redis-node-3]
-changed: [redis-node-4]
-changed: [redis-node-6]
-
-TASK [Create Redis config directory] *******************************************
+ok: [redis-node-5]
 ok: [redis-node-2]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Download Redis 7.0.15] ******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.0.15] *******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.0.15] *******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.0.15 is already installed in /usr/local/bin] ***
 ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-2]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Install Redis 7.0.15 binaries to /usr/local/bin] ****
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *********************
+ok: [redis-node-4]
+ok: [redis-node-3]
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***********************
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *********************
+ok: [redis-node-1]
+ok: [redis-node-4]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] **************************
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Start Redis] ****************************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ************
+ok: [redis-node-2]
 ok: [redis-node-5]
 ok: [redis-node-4]
 ok: [redis-node-3]
-ok: [redis-node-6]
-
-TASK [Create redis.conf for cluster mode] **************************************
 ok: [redis-node-1]
-ok: [redis-node-2]
-ok: [redis-node-3]
-ok: [redis-node-4]
-ok: [redis-node-5]
 ok: [redis-node-6]
-
-TASK [Start Redis server (skip if already running)] ****************************
-changed: [redis-node-1]
-changed: [redis-node-2]
-changed: [redis-node-3]
-changed: [redis-node-4]
-changed: [redis-node-5]
-changed: [redis-node-6]
-
-TASK [Wait for Redis to be ready] **********************************************
-ok: [redis-node-2]
-ok: [redis-node-5]
-ok: [redis-node-3]
-ok: [redis-node-1]
-ok: [redis-node-4]
-ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
 
 PLAY [redis-node-1] ************************************************************
 
@@ -89,48 +147,50 @@ TASK [Form Redis Cluster (3 masters + 3 replicas)] *****************************
 skipping: [redis-node-1]
 
 TASK [Wait for cluster state to be ok] *****************************************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Show final cluster topology] *********************************************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Print cluster topology] **************************************************
 ok: [redis-node-1] => {
     "msg": [
-        "a08406e083fb0f381a613e13c56b7d9b50a458bd 10.10.0.14:6379@16379 slave 6044c54651da819ddd984cacae5bd79463aea088 0 1781519123538 3 connected",
-        "01cc2b11bb8d0126834ffdae4c16b843137be132 10.10.0.15:6379@16379 slave 62cce3a60c8e01525f8d0695fa13d013b60a7a97 0 1781519124443 1 connected",
-        "62cce3a60c8e01525f8d0695fa13d013b60a7a97 10.10.0.11:6379@16379 myself,master - 0 1781519123000 1 connected 0-5460",
-        "760ac4b1f9dad609f57c305bfbb52d7bab5010db 10.10.0.16:6379@16379 slave 01ce738baa6bdd6773483c2aa705ed1827bbf9d6 0 1781519123437 2 connected",
-        "01ce738baa6bdd6773483c2aa705ed1827bbf9d6 10.10.0.12:6379@16379 master - 0 1781519123000 2 connected 5461-10922",
-        "6044c54651da819ddd984cacae5bd79463aea088 10.10.0.13:6379@16379 master - 0 1781519123000 3 connected 10923-16383"
+        "9a84698a94b135560abe8f735be3c65588b1badc 10.10.0.12:6379@16379 master - 0 1781599716600 21 connected 6827-12287",
+        "6c1a7b1c423519c5d67a2ae14a58b44f2163d39f 10.10.0.15:6379@16379 slave 0b4025ea4f62dbde5ef2b82b37ae697a62941f9c 0 1781599716600 22 connected",
+        "dd8dc6461eecb0636a6f292ff6584093b72e34bf 10.10.0.13:6379@16379 master - 0 1781599716000 23 connected 5462-6826 12288-16383",
+        "0b4025ea4f62dbde5ef2b82b37ae697a62941f9c 10.10.0.11:6379@16379 myself,master - 0 1781599715000 22 connected 0-5461",
+        "730e2de424279940dc67bf47fd2ac8c03fe1ab79 10.10.0.16:6379@16379 slave 9a84698a94b135560abe8f735be3c65588b1badc 0 1781599716901 21 connected",
+        "772f105c0904d4465471dac0da62fbd698f3e36c 10.10.0.14:6379@16379 slave dd8dc6461eecb0636a6f292ff6584093b72e34bf 0 1781599716000 23 connected"
     ]
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=14   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-2               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-4               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-5               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-6               : ok=9    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=13   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
+redis-node-2               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-3               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-4               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-5               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-6               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-7               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+redis-node-8               : ok=8    changed=0    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
 
 
 Redis Installed
 Redis Configured for Cluster Mode
 Redis Started on all nodes
 
-Version: 7.0.15
+Version: 7.2.6
 Masters: 3
 Replicas per master: 1
 
 FINAL CLUSTER TOPOLOGY
 
-a08406e083fb0f381a613e13c56b7d9b50a458bd 10.10.0.14:6379@16379 slave 6044c54651da819ddd984cacae5bd79463aea088 0 1781519123538 3 connected
-01cc2b11bb8d0126834ffdae4c16b843137be132 10.10.0.15:6379@16379 slave 62cce3a60c8e01525f8d0695fa13d013b60a7a97 0 1781519124443 1 connected
-62cce3a60c8e01525f8d0695fa13d013b60a7a97 10.10.0.11:6379@16379 myself,master - 0 1781519123000 1 connected 0-5460
-760ac4b1f9dad609f57c305bfbb52d7bab5010db 10.10.0.16:6379@16379 slave 01ce738baa6bdd6773483c2aa705ed1827bbf9d6 0 1781519123437 2 connected
-01ce738baa6bdd6773483c2aa705ed1827bbf9d6 10.10.0.12:6379@16379 master - 0 1781519123000 2 connected 5461-10922
-6044c54651da819ddd984cacae5bd79463aea088 10.10.0.13:6379@16379 master - 0 1781519123000 3 connected 10923-16383
+9a84698a94b135560abe8f735be3c65588b1badc 10.10.0.12:6379@16379 master - 0 1781599716600 21 connected 6827-12287
+6c1a7b1c423519c5d67a2ae14a58b44f2163d39f 10.10.0.15:6379@16379 slave 0b4025ea4f62dbde5ef2b82b37ae697a62941f9c 0 1781599716600 22 connected
+dd8dc6461eecb0636a6f292ff6584093b72e34bf 10.10.0.13:6379@16379 master - 0 1781599716000 23 connected 5462-6826 12288-16383
+0b4025ea4f62dbde5ef2b82b37ae697a62941f9c 10.10.0.11:6379@16379 myself,master - 0 1781599715000 22 connected 0-5461
+730e2de424279940dc67bf47fd2ac8c03fe1ab79 10.10.0.16:6379@16379 slave 9a84698a94b135560abe8f735be3c65588b1badc 0 1781599716901 21 connected
+772f105c0904d4465471dac0da62fbd698f3e36c 10.10.0.14:6379@16379 slave dd8dc6461eecb0636a6f292ff6584093b72e34bf 0 1781599716000 23 connected
 
 CONNECTIVITY STATUS
 
@@ -141,13 +201,17 @@ cluster_slots_pfail:0
 cluster_slots_fail:0
 cluster_known_nodes:6
 cluster_size:3
-cluster_current_epoch:6
-cluster_my_epoch:1
-cluster_stats_messages_ping_sent:397
-cluster_stats_messages_pong_sent:398
-cluster_stats_messages_sent:795
-cluster_stats_messages_ping_received:393
-cluster_stats_messages_pong_received:397
-cluster_stats_messages_meet_received:5
-cluster_stats_messages_received:795
+cluster_current_epoch:23
+cluster_my_epoch:22
+cluster_stats_messages_ping_sent:346
+cluster_stats_messages_pong_sent:335
+cluster_stats_messages_auth-req_sent:5
+cluster_stats_messages_auth-ack_sent:1
+cluster_stats_messages_mfstart_sent:1
+cluster_stats_messages_sent:688
+cluster_stats_messages_ping_received:330
+cluster_stats_messages_pong_received:343
+cluster_stats_messages_auth-req_received:2
+cluster_stats_messages_auth-ack_received:3
+cluster_stats_messages_received:678
 total_cluster_links_buffer_limit_exceeded:0

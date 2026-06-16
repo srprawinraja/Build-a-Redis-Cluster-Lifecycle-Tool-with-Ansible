@@ -29,10 +29,24 @@
     chdir: "/tmp/redis-{{ redis_version }}"
   when: not compiled_bin.stat.exists
 
+- name: "REDIS ROLE | Check if Redis {{ redis_version }} is already installed in /usr/local/bin"
+  shell: |
+    if [ -f /usr/local/bin/redis-server ] && /usr/local/bin/redis-server --version | grep -q "v={{ redis_version }}"; then
+      echo "yes"
+    else
+      echo "no"
+    fi
+  register: redis_installed_check
+  changed_when: false
+  failed_when: false
+  args:
+    executable: /bin/bash
+
 - name: "REDIS ROLE | Install Redis {{ redis_version }} binaries to /usr/local/bin"
   command: make install
   args:
     chdir: "/tmp/redis-{{ redis_version }}"
+  when: redis_installed_check.stdout != "yes"
 
 # ── Step 2: Configure ─────────────────────────────────────
 - name: "REDIS ROLE | Ensure config directory exists"
@@ -54,15 +68,17 @@
   notify: Restart Redis
 
 # ── Step 3: Start ─────────────────────────────────────────
-- name: "REDIS ROLE | Start Redis (skip if already running)"
-  shell: |
-    if redis-cli -h 127.0.0.1 -p {{ redis_port }} ping 2>/dev/null | grep -q PONG; then
-      echo "Redis already running — skipping start"
-    else
-      redis-server {{ redis_conf_path }}
-    fi
+- name: "REDIS ROLE | Check if Redis is running"
+  shell: redis-cli -h 127.0.0.1 -p {{ redis_port }} ping 2>/dev/null || true
+  register: redis_ping_res
+  changed_when: false
+  failed_when: false
   args:
     executable: /bin/bash
+
+- name: "REDIS ROLE | Start Redis"
+  command: redis-server {{ redis_conf_path }}
+  when: "'PONG' not in redis_ping_res.stdout"
 
 - name: "REDIS ROLE | Wait for Redis to be ready on port {{ redis_port }}"
   wait_for:
