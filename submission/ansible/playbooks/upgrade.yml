@@ -151,32 +151,14 @@
         state: stopped
         timeout: 30
 
-    - name: "[REPLICA] Download Redis {{ target }}"
-      get_url:
-        url: "https://download.redis.io/releases/redis-{{ target }}.tar.gz"
-        dest: "/tmp/redis-{{ target }}.tar.gz"
-        validate_certs: no
-
-    - name: "[REPLICA] Extract Redis {{ target }}"
-      unarchive:
-        src: "/tmp/redis-{{ target }}.tar.gz"
-        dest: /tmp
-        remote_src: yes
-
-    - name: "[REPLICA] Compile Redis {{ target }}"
-      command: make
-      args:
-        chdir: "/tmp/redis-{{ target }}"
-
-    - name: "[REPLICA] Install Redis {{ target }}"
-      command: make install
-      args:
-        chdir: "/tmp/redis-{{ target }}"
-
-    - name: "[REPLICA] Start Redis with existing config"
-      shell: redis-server /etc/redis/redis.conf
-      args:
-        executable: /bin/bash
+    - name: "[REPLICA] Install & Start Redis {{ target }} via role"
+      include_role:
+        name: redis
+      vars:
+        redis_version: "{{ target }}"
+        redis_port: 6379
+        redis_conf_path: /etc/redis/redis.conf
+        redis_data_dir: /tmp
 
     - name: "[REPLICA] Wait for Redis to start"
       wait_for:
@@ -243,32 +225,14 @@
         state: stopped
         timeout: 30
 
-    - name: "[MASTER] Download Redis {{ target }}"
-      get_url:
-        url: "https://download.redis.io/releases/redis-{{ target }}.tar.gz"
-        dest: "/tmp/redis-{{ target }}.tar.gz"
-        validate_certs: no
-
-    - name: "[MASTER] Extract Redis {{ target }}"
-      unarchive:
-        src: "/tmp/redis-{{ target }}.tar.gz"
-        dest: /tmp
-        remote_src: yes
-
-    - name: "[MASTER] Compile Redis {{ target }}"
-      command: make
-      args:
-        chdir: "/tmp/redis-{{ target }}"
-
-    - name: "[MASTER] Install Redis {{ target }}"
-      command: make install
-      args:
-        chdir: "/tmp/redis-{{ target }}"
-
-    - name: "[MASTER] Start Redis with existing config"
-      shell: redis-server /etc/redis/redis.conf
-      args:
-        executable: /bin/bash
+    - name: "[MASTER] Install & Start Redis {{ target }} via role"
+      include_role:
+        name: redis
+      vars:
+        redis_version: "{{ target }}"
+        redis_port: 6379
+        redis_conf_path: /etc/redis/redis.conf
+        redis_data_dir: /tmp
 
     - name: "[MASTER] Wait for Redis to start"
       wait_for:

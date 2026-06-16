@@ -1,0 +1,156 @@
+---
+# ============================================================
+# Stretch Goal S1: Scale Out — Add a master + replica pair
+# Usage: ansible-playbook scale_out.yml
+# New nodes are always: redis-node-7 (master) + redis-node-8 (replica)
+# ============================================================
+
+
+# ----------------------------------------------------------
+# Play 1: Install & Configure Redis on New Nodes
+# ----------------------------------------------------------
+- hosts: new_nodes
+  gather_facts: no
+  become: yes
+  roles:
+    - role: redis
+      vars:
+        redis_version: "7.2.6"
+        redis_port: 6379
+        redis_conf_path: /etc/redis/redis.conf
+        redis_data_dir: /var/lib/redis
+
+
+
+
+# ----------------------------------------------------------
+# Play 2: Add New Master (redis-node-7) to the cluster
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+    - name: "[SCALE-OUT] Get new master node ID from redis-node-7"
+      shell: redis-cli -h 10.10.0.17 -p 6379 cluster myid
+      args:
+        executable: /bin/bash
+      register: new_master_id
+
+    - name: "[SCALE-OUT] Check if redis-node-7 already in cluster"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "10.10.0.17:6379"
+      args:
+        executable: /bin/bash
+      register: already_in_cluster
+      ignore_errors: yes
+
+    - name: "[SCALE-OUT] Add redis-node-7 as new master"
+      shell: redis-cli --cluster add-node 10.10.0.17:6379 10.10.0.11:6379
+      args:
+        executable: /bin/bash
+      when: already_in_cluster.rc != 0
+
+    - name: "[SCALE-OUT] Wait for new master to join cluster"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "10.10.0.17:6379"
+      args:
+        executable: /bin/bash
+      register: master_joined
+      until: master_joined.rc == 0
+      retries: 15
+      delay: 2
+
+    - name: "[SCALE-OUT] Show new master joined"
+      debug:
+        msg: "redis-node-7 (10.10.0.17) joined the cluster as master — ID: {{ new_master_id.stdout }}"
+
+
+# ----------------------------------------------------------
+# Play 3: Add New Replica (redis-node-8) for the new master
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+    - name: "[SCALE-OUT] Get new master ID"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "10.10.0.17:6379" | awk '{print $1}'
+      args:
+        executable: /bin/bash
+      register: new_master_node_id
+
+    - name: "[SCALE-OUT] Check if redis-node-8 already in cluster"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "10.10.0.18:6379"
+      args:
+        executable: /bin/bash
+      register: replica_already_in_cluster
+      ignore_errors: yes
+
+    - name: "[SCALE-OUT] Add redis-node-8 as replica of redis-node-7"
+      shell: >
+        redis-cli --cluster add-node 10.10.0.18:6379 10.10.0.11:6379
+        --cluster-slave --cluster-master-id {{ new_master_node_id.stdout }}
+      args:
+        executable: /bin/bash
+      when: replica_already_in_cluster.rc != 0
+
+    - name: "[SCALE-OUT] Wait for new replica to join cluster"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "10.10.0.18:6379"
+      args:
+        executable: /bin/bash
+      register: replica_joined
+      until: replica_joined.rc == 0
+      retries: 15
+      delay: 2
+
+    - name: "[SCALE-OUT] Show new replica joined"
+      debug:
+        msg: "redis-node-8 (10.10.0.18) joined as replica of redis-node-7 ({{ new_master_node_id.stdout }})"
+
+
+# ----------------------------------------------------------
+# Play 4: Rebalance Hash Slots Across All Masters
+# ----------------------------------------------------------
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+    - name: "[SCALE-OUT] Rebalance hash slots across all masters"
+      shell: redis-cli --cluster rebalance 10.10.0.11:6379 --cluster-use-empty-masters
+      args:
+        executable: /bin/bash
+      register: rebalance_out
+
+    - name: "[SCALE-OUT] Show rebalance result"
+      debug:
+        msg: "{{ rebalance_out.stdout_lines }}"
+
+    - name: "[SCALE-OUT] Verify cluster health after rebalance"
+      shell: 'redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"'
+      args:
+        executable: /bin/bash
+      register: cluster_ok
+      until: cluster_ok.rc == 0
+      retries: 15
+      delay: 2
+
+    - name: "[SCALE-OUT] Print final cluster topology"
+      shell: |
+        echo "UPDATED CLUSTER TOPOLOGY"
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes | while read line; do
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          ip=$(echo "$addr" | cut -d':' -f1)
+          port=$(echo "$addr" | cut -d':' -f2)
+          role=$(echo "$line" | awk '{print $3}' | sed 's/myself,//')
+          version=$(redis-cli -h "$ip" -p "$port" info server 2>/dev/null | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
+          slots=$(echo "$line" | awk '{print $9}')
+          echo "  ${ip}:${port}  [${role}]  v${version}  slots: ${slots}"
+        done
+      args:
+        executable: /bin/bash
+      register: topology
+
+    - name: "[SCALE-OUT] Show topology"
+      debug:
+        msg: "{{ topology.stdout_lines }}"
+
+    - name: "[SCALE-OUT] Scale out complete"
+      debug:
+        msg: "SCALE OUT COMPLETE — 2 new nodes added (master: 10.10.0.17, replica: 10.10.0.18), slots rebalanced across 4 masters"
