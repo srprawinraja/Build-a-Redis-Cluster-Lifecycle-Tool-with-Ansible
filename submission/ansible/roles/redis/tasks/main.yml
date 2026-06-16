@@ -33,7 +33,6 @@
   command: make install
   args:
     chdir: "/tmp/redis-{{ redis_version }}"
-  when: not compiled_bin.stat.exists
 
 # ── Step 2: Configure ─────────────────────────────────────
 - name: "REDIS ROLE | Ensure config directory exists"

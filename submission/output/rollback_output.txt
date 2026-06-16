@@ -1,0 +1,186 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+Backing up cluster data before rollback...
+Warning: Only 0 keys found in cluster to backup. Pre-generating missing keys up to 1000...
+Successfully backed up/prepared 1000 keys.
+
+Starting Rolling Rollback → Redis 7.0.15
+
+
+PLAY [redis_nodes] *************************************************************
+
+TASK [ROLLBACK | Stop Redis on all nodes] **************************************
+changed: [redis-node-5]
+changed: [redis-node-3]
+changed: [redis-node-2]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-6]
+changed: [redis-node-8]
+changed: [redis-node-7]
+
+TASK [ROLLBACK | Wait for Redis to stop] ***************************************
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-4]
+ok: [redis-node-1]
+ok: [redis-node-7]
+ok: [redis-node-6]
+ok: [redis-node-8]
+
+TASK [ROLLBACK | Clear local Redis data to avoid RDB version conflicts] ********
+changed: [redis-node-5] => (item=/tmp/dump.rdb)
+changed: [redis-node-2] => (item=/tmp/dump.rdb)
+changed: [redis-node-4] => (item=/tmp/dump.rdb)
+changed: [redis-node-1] => (item=/tmp/dump.rdb)
+changed: [redis-node-3] => (item=/tmp/dump.rdb)
+changed: [redis-node-5] => (item=/tmp/appendonlydir)
+changed: [redis-node-2] => (item=/tmp/appendonlydir)
+changed: [redis-node-4] => (item=/tmp/appendonlydir)
+changed: [redis-node-1] => (item=/tmp/appendonlydir)
+changed: [redis-node-3] => (item=/tmp/appendonlydir)
+changed: [redis-node-6] => (item=/tmp/dump.rdb)
+ok: [redis-node-7] => (item=/tmp/dump.rdb)
+ok: [redis-node-8] => (item=/tmp/dump.rdb)
+changed: [redis-node-8] => (item=/tmp/appendonlydir)
+changed: [redis-node-7] => (item=/tmp/appendonlydir)
+changed: [redis-node-6] => (item=/tmp/appendonlydir)
+
+TASK [ROLLBACK | Install & Start Redis 7.0.15 via role] ************************
+included: redis for redis-node-1, redis-node-2, redis-node-3, redis-node-4, redis-node-5, redis-node-6, redis-node-7, redis-node-8
+
+TASK [redis : REDIS ROLE | Check if Redis 7.0.15 binary already compiled] ******
+ok: [redis-node-4]
+ok: [redis-node-2]
+ok: [redis-node-5]
+ok: [redis-node-3]
+ok: [redis-node-1]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Download Redis 7.0.15] ******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.0.15] *******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.0.15] *******************************
+skipping: [redis-node-1]
+skipping: [redis-node-2]
+skipping: [redis-node-3]
+skipping: [redis-node-4]
+skipping: [redis-node-5]
+skipping: [redis-node-6]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Install Redis 7.0.15 binaries to /usr/local/bin] ****
+changed: [redis-node-4]
+changed: [redis-node-2]
+changed: [redis-node-5]
+changed: [redis-node-1]
+changed: [redis-node-3]
+changed: [redis-node-8]
+changed: [redis-node-7]
+changed: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *********************
+ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-2]
+ok: [redis-node-4]
+ok: [redis-node-7]
+ok: [redis-node-8]
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***********************
+ok: [redis-node-4]
+ok: [redis-node-2]
+ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-8]
+ok: [redis-node-7]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *********************
+ok: [redis-node-5]
+ok: [redis-node-1]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Start Redis (skip if already running)] **************
+changed: [redis-node-1]
+changed: [redis-node-2]
+changed: [redis-node-3]
+changed: [redis-node-4]
+changed: [redis-node-5]
+changed: [redis-node-6]
+changed: [redis-node-7]
+changed: [redis-node-8]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ************
+ok: [redis-node-2]
+ok: [redis-node-1]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-6]
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [ROLLBACK | Wait for Redis to start] **************************************
+ok: [redis-node-1]
+ok: [redis-node-5]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-2]
+ok: [redis-node-7]
+ok: [redis-node-6]
+ok: [redis-node-8]
+
+PLAY [redis-node-1] ************************************************************
+
+TASK [ROLLBACK | Wait for cluster to return to ok] *****************************
+changed: [redis-node-1]
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=13   changed=5    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-2               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-3               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-4               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-5               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-6               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-7               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+redis-node-8               : ok=12   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+
+
+Restoring backed up cluster data...
+Successfully restored 1000 keys.
+
+Verifying data integrity post-rollback...
+POST-ROLLBACK VERIFY: PASS — 1000/1000 keys verified
+ROLLBACK COMPLETE — all nodes on v7.0.15, data integrity verified
