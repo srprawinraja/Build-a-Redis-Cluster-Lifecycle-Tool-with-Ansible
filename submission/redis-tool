@@ -122,6 +122,62 @@ def get_stable_masters(container_cli):
         time.sleep(1)
     return masters
 
+def get_inventory_nodes():
+    import os
+    nodes = set()
+    try:
+        if os.path.exists("ansible/inventory/hosts.ini"):
+            with open("ansible/inventory/hosts.ini", "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("[") and not line.startswith("#") and "ansible_host" in line:
+                        parts = line.split()
+                        if parts:
+                            nodes.add(parts[0])
+    except Exception:
+        pass
+    return sorted(list(nodes))
+
+def log_operation(command, status, details):
+    import datetime
+    import json
+    import os
+    
+    log_dir = "logs"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+        
+    log_entry = {
+        "timestamp": datetime.datetime.now().isoformat(),
+        "command": command,
+        "status": status,
+        "nodes": details.get("nodes", get_inventory_nodes()),
+        "actions_taken": details.get("actions", []),
+        "outcome": details.get("outcome", {})
+    }
+    
+    # Save to a single operations log
+    log_path = os.path.join(log_dir, "operations.json")
+    try:
+        entries = []
+        if os.path.exists(log_path):
+            with open(log_path, "r") as f:
+                content = f.read().strip()
+                if content:
+                    entries = json.loads(content)
+        entries.append(log_entry)
+        with open(log_path, "w") as f:
+            json.dump(entries, f, indent=2)
+            
+        # Also write a separate file for this command run
+        sanitized_command = command.replace(" ", "_")
+        time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        single_path = os.path.join(log_dir, f"op_{time_str}_{sanitized_command}.json")
+        with open(single_path, "w") as f:
+            json.dump(log_entry, f, indent=2)
+    except Exception as e:
+        print(f"Error logging operation: {e}")
+
 # -------------------------
 # DATA SEED
 # -------------------------
@@ -134,12 +190,21 @@ def handle_seed(args):
 
     print(f"\nSeeding {keys} keys into Redis Cluster via Ansible...\n")
 
-    subprocess.run([
+    res = subprocess.run([
         "ansible-playbook",
         "-i", "ansible/inventory/hosts.ini",
         "ansible/playbooks/data_seed.yml",
         "-e", f"seed_keys={keys}"
     ])
+    status = "SUCCESS" if res.returncode == 0 else "FAILED"
+    log_operation(
+        "data seed",
+        status,
+        {
+            "actions": [f"Seed {keys} keys into cluster"],
+            "outcome": {"returncode": res.returncode, "keys_seeded": keys}
+        }
+    )
 
 
 # -------------------------
@@ -149,11 +214,20 @@ def handle_verify():
 
     print("\nVerifying keys in Redis Cluster via Ansible...\n")
 
-    subprocess.run([
+    res = subprocess.run([
         "ansible-playbook",
         "-i", "ansible/inventory/hosts.ini",
         "ansible/playbooks/data_verify.yml"
     ])
+    status = "SUCCESS" if res.returncode == 0 else "FAILED"
+    log_operation(
+        "data verify",
+        status,
+        {
+            "actions": ["Verify cluster key hashes against expected SHA256"],
+            "outcome": {"returncode": res.returncode}
+        }
+    )
 
 
 # -------------------------
@@ -163,11 +237,20 @@ def handle_status():
 
     print("\nFetching Redis Cluster Status via Ansible...\n")
 
-    subprocess.run([
+    res = subprocess.run([
         "ansible-playbook",
         "-i", "ansible/inventory/hosts.ini",
         "ansible/playbooks/status.yml"
     ])
+    status = "SUCCESS" if res.returncode == 0 else "FAILED"
+    log_operation(
+        "status",
+        status,
+        {
+            "actions": ["Fetch cluster health and topology"],
+            "outcome": {"returncode": res.returncode}
+        }
+    )
 
 
 # -------------------------
@@ -205,11 +288,20 @@ if module == "status":
 if module == "verify":
     if "--full" in args:
         print("\nExecuting Comprehensive Post-Upgrade Verification...\n")
-        subprocess.run([
+        res = subprocess.run([
             "ansible-playbook",
             "-i", "ansible/inventory/hosts.ini",
             "ansible/playbooks/verify.yml"
         ])
+        status = "SUCCESS" if res.returncode == 0 else "FAILED"
+        log_operation(
+            "verify",
+            status,
+            {
+                "actions": ["Run comprehensive post-upgrade verification"],
+                "outcome": {"returncode": res.returncode}
+            }
+        )
     else:
         print("Usage: ./redis-tool verify --full")
         sys.exit(1)
@@ -231,20 +323,38 @@ if module == "scale":
 
     if add_nodes is not None and add_nodes == 2:
         print(f"\nScaling Out — Adding {add_nodes} new nodes (1 master + 1 replica)...\n")
-        subprocess.run([
+        res = subprocess.run([
             "ansible-playbook",
             "-i", "ansible/inventory/hosts.ini",
             "ansible/playbooks/scale_out.yml"
         ])
+        status = "SUCCESS" if res.returncode == 0 else "FAILED"
+        log_operation(
+            "scale out",
+            status,
+            {
+                "actions": [f"Scale out cluster: add {add_nodes} new nodes"],
+                "outcome": {"returncode": res.returncode}
+            }
+        )
 
     elif remove_node is not None:
         print(f"\nScaling In — Removing node {remove_node} and its replica...\n")
-        subprocess.run([
+        res = subprocess.run([
             "ansible-playbook",
             "-i", "ansible/inventory/hosts.ini",
             "ansible/playbooks/scale_in.yml",
             "-e", f"node_id={remove_node}"
         ])
+        status = "SUCCESS" if res.returncode == 0 else "FAILED"
+        log_operation(
+            "scale in",
+            status,
+            {
+                "actions": [f"Scale in cluster: remove node {remove_node} and its replica"],
+                "outcome": {"returncode": res.returncode}
+            }
+        )
 
     else:
         print("Usage:")
@@ -311,16 +421,33 @@ if module == "upgrade":
 
     if all_already_at_target:
         print(f"All nodes are already at version {target_version}. Upgrade is a no-op.")
+        log_operation(
+            "upgrade",
+            "SUCCESS",
+            {
+                "actions": [f"Rolling upgrade check to version {target_version} (no-op)"],
+                "outcome": {"msg": "No-op. All nodes already at target version", "version": target_version}
+            }
+        )
         sys.exit(0)
 
     print(f"\nStarting Rolling Upgrade → Redis {target_version}\n")
 
-    subprocess.run([
+    res = subprocess.run([
         "ansible-playbook",
         "-i", "ansible/inventory/hosts.ini",
         "ansible/playbooks/upgrade.yml",
         "-e", f"upgrade_version={target_version}"
     ])
+    status = "SUCCESS" if res.returncode == 0 else "FAILED"
+    log_operation(
+        "upgrade",
+        status,
+        {
+            "actions": [f"Rolling upgrade of cluster to version {target_version}"],
+            "outcome": {"returncode": res.returncode, "target_version": target_version}
+        }
+    )
 
 
 if module == "rollback":
@@ -488,9 +615,51 @@ if module == "rollback":
         if missing == 0 and mismatch == 0:
             print("POST-ROLLBACK VERIFY: PASS — 1000/1000 keys verified")
             print(f"ROLLBACK COMPLETE — all nodes on v{target_version}, data integrity verified")
+            log_operation(
+                "rollback",
+                "SUCCESS",
+                {
+                    "actions": [f"Rollback cluster to version {target_version}"],
+                    "outcome": {
+                        "playbook_returncode": playbook_res.returncode,
+                        "keys_restored": restored_count,
+                        "keys_verified": keys_verified,
+                        "missing_keys": missing,
+                        "mismatched_keys": mismatch
+                    }
+                }
+            )
         else:
             print(f"POST-ROLLBACK VERIFY: FAIL — {missing} keys missing, {mismatch} values mismatched")
+            log_operation(
+                "rollback",
+                "FAILED",
+                {
+                    "actions": [f"Rollback cluster to version {target_version}"],
+                    "outcome": {
+                        "playbook_returncode": playbook_res.returncode,
+                        "keys_restored": restored_count,
+                        "keys_verified": keys_verified,
+                        "missing_keys": missing,
+                        "mismatched_keys": mismatch,
+                        "error": "Data verification failed"
+                    }
+                }
+            )
             sys.exit(1)
+    else:
+        log_operation(
+            "rollback",
+            "FAILED",
+            {
+                "actions": [f"Rollback cluster to version {target_version}"],
+                "outcome": {
+                    "playbook_returncode": playbook_res.returncode,
+                    "error": "Rollback playbook failed"
+                }
+            }
+        )
+        sys.exit(1)
 
 
 # -------------------------
@@ -510,7 +679,7 @@ if module == "provision":
         if args[i] == "--replicas-per-master":
             replicas = args[i + 1]
 
-    subprocess.run([
+    res = subprocess.run([
         "ansible-playbook",
         "-i", "ansible/inventory/hosts.ini",
         "ansible/playbooks/provision.yml"
@@ -542,3 +711,18 @@ if module == "provision":
         "-p", "6379",
         "cluster", "info"
     ])
+
+    status = "SUCCESS" if res.returncode == 0 else "FAILED"
+    log_operation(
+        "provision",
+        status,
+        {
+            "actions": [f"Provision Redis cluster version {version}"],
+            "outcome": {
+                "returncode": res.returncode,
+                "version": version,
+                "masters": masters,
+                "replicas_per_master": replicas
+            }
+        }
+    )
