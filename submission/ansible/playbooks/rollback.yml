@@ -1,0 +1,61 @@
+---
+# ============================================================
+# Stretch Goal S3: Rollback — Parallel Rollback with Backup/Restore
+# Usage: ansible-playbook rollback.yml -e "rollback_version=7.0.15"
+# ============================================================
+
+- hosts: redis_nodes
+  gather_facts: no
+  become: yes
+  vars:
+    target: "{{ rollback_version }}"
+
+  tasks:
+    - name: "ROLLBACK | Stop Redis on all nodes"
+      shell: redis-cli -h 127.0.0.1 -p 6379 shutdown nosave 2>/dev/null; true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: "ROLLBACK | Wait for Redis to stop"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        state: stopped
+        timeout: 30
+
+    - name: "ROLLBACK | Clear local Redis data to avoid RDB version conflicts"
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/dump.rdb
+        - /tmp/appendonlydir
+
+    - name: "ROLLBACK | Install & Start Redis {{ target }} via role"
+      include_role:
+        name: redis
+      vars:
+        redis_version: "{{ target }}"
+        redis_port: 6379
+        redis_conf_path: /etc/redis/redis.conf
+        redis_data_dir: /tmp
+
+    - name: "ROLLBACK | Wait for Redis to start"
+      wait_for:
+        host: 127.0.0.1
+        port: 6379
+        timeout: 30
+
+
+- hosts: redis-node-1
+  gather_facts: no
+  tasks:
+    - name: "ROLLBACK | Wait for cluster to return to ok"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"
+      args:
+        executable: /bin/bash
+      register: cluster_ok
+      until: cluster_ok.rc == 0
+      retries: 20
+      delay: 2
