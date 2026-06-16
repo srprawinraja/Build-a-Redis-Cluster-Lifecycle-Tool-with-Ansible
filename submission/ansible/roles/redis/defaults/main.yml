@@ -1,0 +1,7 @@
+---
+# Default variable values for the redis role.
+# Override these when calling the role using vars: or -e flags.
+redis_version: "7.0.15"
+redis_port: 6379
+redis_conf_path: /etc/redis/redis.conf
+redis_data_dir: /tmp

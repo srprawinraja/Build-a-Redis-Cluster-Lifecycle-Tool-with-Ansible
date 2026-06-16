@@ -4,7 +4,13 @@ import sys
 import subprocess
 import shutil
 import re
-sys.stdout.reconfigure(line_buffering=True) 
+import os
+sys.stdout.reconfigure(line_buffering=True)
+
+# Point Ansible to the correct roles and config paths regardless of working directory
+os.environ["ANSIBLE_ROLES_PATH"]  = "ansible/roles"
+os.environ["ANSIBLE_CONFIG"]      = "ansible/ansible.cfg"
+
 
 # -------------------------
 # PREREQUISITE CHECK
@@ -152,6 +158,30 @@ if module == "verify":
         ])
     else:
         print("Usage: ./redis-tool verify --full")
+        sys.exit(1)
+
+
+# -------------------------
+# SCALE COMMAND ROUTER
+# -------------------------
+if module == "scale":
+
+    add_nodes = None
+
+    for i in range(len(args)):
+        if args[i] == "--add-nodes":
+            add_nodes = int(args[i + 1])
+
+    if add_nodes is not None and add_nodes == 2:
+        print(f"\nScaling Out — Adding {add_nodes} new nodes (1 master + 1 replica)...\n")
+        subprocess.run([
+            "ansible-playbook",
+            "-i", "ansible/inventory/hosts.ini",
+            "ansible/playbooks/scale_out.yml"
+        ])
+    else:
+        print("Usage: ./redis-tool scale --add-nodes 2")
+        print("Note: Only --add-nodes 2 is supported (adds 1 master + 1 replica pair).")
         sys.exit(1)
 
 

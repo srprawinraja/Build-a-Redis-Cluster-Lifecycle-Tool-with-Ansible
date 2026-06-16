@@ -1,0 +1,12 @@
+port {{ redis_port }}
+bind 0.0.0.0
+protected-mode no
+
+daemonize yes
+dir {{ redis_data_dir }}
+
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+
+appendonly yes

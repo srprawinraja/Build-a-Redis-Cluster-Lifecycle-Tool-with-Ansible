@@ -1,68 +1,14 @@
 ---
 # Play 1: Install, configure and start Redis on ALL 6 nodes
-- hosts: all
+- hosts: redis_nodes
   become: yes
-
-  tasks:
-    - name: Download Redis 7.0.15
-      get_url:
-        url: https://download.redis.io/releases/redis-7.0.15.tar.gz
-        dest: /tmp/redis-7.0.15.tar.gz
-        validate_certs: no
-
-    - name: Extract Redis source
-      unarchive:
-        src: /tmp/redis-7.0.15.tar.gz
-        dest: /tmp
-        remote_src: yes
-
-    - name: Compile Redis
-      command: make
-      args:
-        chdir: /tmp/redis-7.0.15
-
-    - name: Install Redis
-      command: make install
-      args:
-        chdir: /tmp/redis-7.0.15
-
-    - name: Create Redis config directory
-      file:
-        path: /etc/redis
-        state: directory
-
-    - name: Create redis.conf for cluster mode
-      copy:
-        dest: /etc/redis/redis.conf
-        content: |
-          port 6379
-          bind 0.0.0.0
-          protected-mode no
-
-          daemonize yes
-          dir /tmp
-
-          cluster-enabled yes
-          cluster-config-file nodes.conf
-          cluster-node-timeout 5000
-
-          appendonly yes
-
-    - name: Start Redis server (skip if already running)
-      shell: |
-        if redis-cli -h 127.0.0.1 -p 6379 ping 2>/dev/null | grep -q PONG; then
-          echo "Redis already running"
-        else
-          redis-server /etc/redis/redis.conf
-        fi
-      args:
-        executable: /bin/bash
-
-    - name: Wait for Redis to be ready
-      wait_for:
-        host: 127.0.0.1
-        port: 6379
-        timeout: 30
+  roles:
+    - role: redis
+      vars:
+        redis_version: "7.0.15"
+        redis_port: 6379
+        redis_conf_path: /etc/redis/redis.conf
+        redis_data_dir: /tmp
 
 
 # Play 2: Form the cluster (runs on redis-node-1 only, after all nodes are up)

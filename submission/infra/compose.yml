@@ -71,6 +71,30 @@ services:
       redis-net:
         ipv4_address: 10.10.0.16
 
+  redis-node-7:
+    image: redis-node
+    container_name: redis-node-7
+    ports:
+      - "2227:22"
+      - "6385:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
+    networks:
+      redis-net:
+        ipv4_address: 10.10.0.17
+
+  redis-node-8:
+    image: redis-node
+    container_name: redis-node-8
+    ports:
+      - "2228:22"
+      - "6386:6379"
+    volumes:
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:ro
+    networks:
+      redis-net:
+        ipv4_address: 10.10.0.18
+
 networks:
   redis-net:
     driver: bridge
