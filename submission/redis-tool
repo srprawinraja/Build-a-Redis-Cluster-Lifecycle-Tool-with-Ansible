@@ -166,11 +166,14 @@ if module == "verify":
 # -------------------------
 if module == "scale":
 
-    add_nodes = None
+    add_nodes   = None
+    remove_node = None
 
     for i in range(len(args)):
         if args[i] == "--add-nodes":
             add_nodes = int(args[i + 1])
+        if args[i] == "--remove-node":
+            remove_node = args[i + 1]
 
     if add_nodes is not None and add_nodes == 2:
         print(f"\nScaling Out — Adding {add_nodes} new nodes (1 master + 1 replica)...\n")
@@ -179,9 +182,20 @@ if module == "scale":
             "-i", "ansible/inventory/hosts.ini",
             "ansible/playbooks/scale_out.yml"
         ])
+
+    elif remove_node is not None:
+        print(f"\nScaling In — Removing node {remove_node} and its replica...\n")
+        subprocess.run([
+            "ansible-playbook",
+            "-i", "ansible/inventory/hosts.ini",
+            "ansible/playbooks/scale_in.yml",
+            "-e", f"node_id={remove_node}"
+        ])
+
     else:
-        print("Usage: ./redis-tool scale --add-nodes 2")
-        print("Note: Only --add-nodes 2 is supported (adds 1 master + 1 replica pair).")
+        print("Usage:")
+        print("  ./redis-tool scale --add-nodes 2")
+        print("  ./redis-tool scale --remove-node <cluster-node-id>")
         sys.exit(1)
 
 

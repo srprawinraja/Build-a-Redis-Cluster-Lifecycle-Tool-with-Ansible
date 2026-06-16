@@ -1,0 +1,129 @@
+---
+# ============================================================
+# Stretch Goal S2: Scale In — Remove a master + its replica
+# Usage: ansible-playbook scale_in.yml -e "node_id=<cluster-node-id>"
+# ============================================================
+
+- hosts: redis-node-1
+  gather_facts: no
+
+  tasks:
+
+    # ── Step 1: Validate node exists and is a master ──────────────────
+    - name: "[SCALE-IN] Get info for target node"
+      shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes | grep "^{{ node_id }}"
+      args:
+        executable: /bin/bash
+      register: node_info
+      failed_when: node_info.stdout == ""
+
+    - name: "[SCALE-IN] Fail if target node is not a master"
+      fail:
+        msg: >
+          Node {{ node_id }} is not a master (role: {{ node_info.stdout.split()[2] }}).
+          Only masters can be removed via scale-in. Please provide a master node ID.
+      when: "'master' not in node_info.stdout"
+
+    - name: "[SCALE-IN] Show target node info"
+      debug:
+        msg:
+          - "Target node ID : {{ node_id }}"
+          - "Node details   : {{ node_info.stdout }}"
+
+    # ── Step 2: Find this master's replica ───────────────────────────
+    - name: "[SCALE-IN] Find replica of this master"
+      shell: >
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes |
+        awk -v mid="{{ node_id }}" '$4 == mid {print $1}'
+      args:
+        executable: /bin/bash
+      register: replica_node_id
+
+    - name: "[SCALE-IN] Show replica info"
+      debug:
+        msg: "Replica node ID: {{ replica_node_id.stdout | default('none found') }}"
+
+    # ── Step 3: Migrate all slots off the master (weight=0 rebalance) ─
+    - name: "[SCALE-IN] Migrate all slots off the master node"
+      shell: >
+        redis-cli --cluster rebalance 10.10.0.11:6379
+        --cluster-weight {{ node_id }}=0
+      args:
+        executable: /bin/bash
+      register: reshard_out
+
+    - name: "[SCALE-IN] Show slot migration result"
+      debug:
+        msg: "{{ reshard_out.stdout_lines }}"
+
+    - name: "[SCALE-IN] Verify node has zero slots after migration"
+      shell: >
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes |
+        grep "^{{ node_id }}" | awk '{print $9}'
+      args:
+        executable: /bin/bash
+      register: remaining_slots
+
+    - name: "[SCALE-IN] Confirm all slots migrated"
+      debug:
+        msg: "Remaining slots on target master: '{{ remaining_slots.stdout }}' (should be empty)"
+
+    # ── Step 4: Remove the replica from the cluster first ─────────────
+    - name: "[SCALE-IN] Remove replica from cluster"
+      shell: redis-cli --cluster del-node 10.10.0.11:6379 {{ replica_node_id.stdout }}
+      args:
+        executable: /bin/bash
+      when: replica_node_id.stdout != ""
+      register: del_replica
+
+    - name: "[SCALE-IN] Show replica removal result"
+      debug:
+        msg: "{{ del_replica.stdout_lines }}"
+      when: replica_node_id.stdout != ""
+
+    # ── Step 5: Remove the master from the cluster ────────────────────
+    - name: "[SCALE-IN] Remove master from cluster"
+      shell: redis-cli --cluster del-node 10.10.0.11:6379 {{ node_id }}
+      args:
+        executable: /bin/bash
+      register: del_master
+
+    - name: "[SCALE-IN] Show master removal result"
+      debug:
+        msg: "{{ del_master.stdout_lines }}"
+
+    # ── Step 6: Post-removal health check ─────────────────────────────
+    - name: "[SCALE-IN] Wait for cluster to stabilize"
+      shell: 'redis-cli -h 127.0.0.1 -p 6379 cluster info | grep "cluster_state:ok"'
+      args:
+        executable: /bin/bash
+      register: cluster_ok
+      until: cluster_ok.rc == 0
+      retries: 15
+      delay: 2
+
+    - name: "[SCALE-IN] Print updated cluster topology"
+      shell: |
+        echo "UPDATED CLUSTER TOPOLOGY"
+        redis-cli -h 127.0.0.1 -p 6379 cluster nodes | while read line; do
+          addr=$(echo "$line" | awk '{print $2}' | cut -d'@' -f1)
+          ip=$(echo "$addr" | cut -d':' -f1)
+          port=$(echo "$addr" | cut -d':' -f2)
+          role=$(echo "$line" | awk '{print $3}' | sed 's/myself,//')
+          version=$(redis-cli -h "$ip" -p "$port" info server 2>/dev/null | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
+          slots=$(echo "$line" | awk '{print $9}')
+          echo "  ${ip}:${port}  [${role}]  v${version}  slots: ${slots}"
+        done
+      args:
+        executable: /bin/bash
+      register: topology
+
+    - name: "[SCALE-IN] Show topology"
+      debug:
+        msg: "{{ topology.stdout_lines }}"
+
+    - name: "[SCALE-IN] Scale in complete"
+      debug:
+        msg: >
+          SCALE IN COMPLETE — master {{ node_id }} and its replica
+          {{ replica_node_id.stdout }} removed. Cluster is healthy.
