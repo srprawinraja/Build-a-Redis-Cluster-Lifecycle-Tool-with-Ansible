@@ -1,0 +1,5 @@
+✓ Docker 29.5.3 found
+✓ Ansible 2.17.14 found
+Proceeding...
+
+All nodes are already at version 7.2.6. Upgrade is a no-op.

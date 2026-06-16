@@ -45,12 +45,14 @@
       until: cluster_ready.rc == 0
       retries: 10
       delay: 2
+      changed_when: false
       args:
         executable: /bin/bash
 
     - name: Show final cluster topology
       shell: redis-cli -h 127.0.0.1 -p 6379 cluster nodes
       register: topology
+      changed_when: false
       args:
         executable: /bin/bash
 

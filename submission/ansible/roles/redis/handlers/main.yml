@@ -4,7 +4,8 @@
 
 - name: Restart Redis
   shell: |
-    redis-cli -h 127.0.0.1 -p {{ redis_port }} shutdown nosave 2>/dev/null; true
+    redis-cli -h 127.0.0.1 -p {{ redis_port }} save 2>/dev/null || true
+    redis-cli -h 127.0.0.1 -p {{ redis_port }} shutdown nosave 2>/dev/null || true
     sleep 1
     redis-server {{ redis_conf_path }}
   args:

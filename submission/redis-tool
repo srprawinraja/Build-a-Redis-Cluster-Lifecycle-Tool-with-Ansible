@@ -267,6 +267,52 @@ if module == "upgrade":
         if args[i] == "--strategy":
             strategy = args[i + 1]
 
+    if target_version is None:
+        print("Usage: ./redis-tool upgrade --target-version <version>")
+        sys.exit(1)
+
+    container_cli = "docker" if shutil.which("docker") else "podman"
+    all_already_at_target = False
+    try:
+        nodes_res = subprocess.run(
+            [container_cli, "exec", "redis-node-1", "redis-cli", "-h", "127.0.0.1", "-p", "6379", "cluster", "nodes"],
+            capture_output=True, text=True, timeout=5
+        )
+        if nodes_res.returncode == 0:
+            all_at_target = True
+            found_nodes = False
+            for line in nodes_res.stdout.splitlines():
+                parts = line.split()
+                if len(parts) >= 2:
+                    addr = parts[1].split("@")[0]
+                    if ":" in addr:
+                        ip, port = addr.split(":")
+                        ver_res = subprocess.run(
+                            [container_cli, "exec", "redis-node-1", "redis-cli", "-h", ip, "-p", port, "info", "server"],
+                            capture_output=True, text=True, timeout=3
+                        )
+                        if ver_res.returncode == 0:
+                            found_nodes = True
+                            node_ver = None
+                            for vline in ver_res.stdout.splitlines():
+                                if vline.startswith("redis_version:"):
+                                    node_ver = vline.split(":")[1].strip()
+                                    break
+                            if node_ver != target_version:
+                                all_at_target = False
+                                break
+                        else:
+                            all_at_target = False
+                            break
+            if found_nodes and all_at_target:
+                all_already_at_target = True
+    except Exception:
+        pass
+
+    if all_already_at_target:
+        print(f"All nodes are already at version {target_version}. Upgrade is a no-op.")
+        sys.exit(0)
+
     print(f"\nStarting Rolling Upgrade → Redis {target_version}\n")
 
     subprocess.run([
