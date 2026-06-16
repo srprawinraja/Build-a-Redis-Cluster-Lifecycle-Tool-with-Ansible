@@ -17,6 +17,9 @@ os.environ["ANSIBLE_CONFIG"]      = "ansible/ansible.cfg"
 # -------------------------
 def check_prerequisites():
     errors = []
+    missing_container = False
+    missing_ansible = False
+    ansible_version_low = False
 
     # Check Container Runtime (prefer Podman)
     if shutil.which("podman"):
@@ -30,10 +33,10 @@ def check_prerequisites():
         print(f"✓ Docker {version} found")
 
     else:
+        missing_container = True
         errors.append(
             "✗ Container runtime not found (Docker or Podman)\n"
-            "  Install Podman: https://podman.io/docs/installation\n"
-            "  Install Docker: https://docs.docker.com/engine/install/"
+            "  Install Podman: sudo apt-get install -y podman"
         )
 
     # Check Ansible >= 2.14
@@ -49,21 +52,68 @@ def check_prerequisites():
             if major > 2 or (major == 2 and minor >= 14):
                 print(f"✓ Ansible {version_str} found")
             else:
+                ansible_version_low = True
                 errors.append(
                     f"✗ Ansible {version_str} found but version 2.14+ is required\n"
                     "  Upgrade: pip install --upgrade ansible"
                 )
     else:
+        missing_ansible = True
         errors.append(
             "✗ Ansible not found\n"
-            "  Install: pip install ansible  (or use your OS package manager)"
+            "  Install: pip install ansible"
         )
 
     if errors:
         for err in errors:
             print(err)
-        print("\nPlease install the missing dependencies and retry.")
-        sys.exit(1)
+
+        auto_install = "--auto-install" in sys.argv
+        if auto_install:
+            print("\nMissing dependencies detected. --auto-install flag is set.")
+            try:
+                confirm = input("Would you like to install the missing dependencies? This will modify your system. (y/N): ").strip().lower()
+            except KeyboardInterrupt:
+                print("\nInstallation cancelled.")
+                sys.exit(1)
+
+            if confirm in ("y", "yes"):
+                print("\nStarting automatic installation of dependencies...")
+                if missing_container:
+                    print("\nInstalling Podman container runtime...")
+                    subprocess.run(["sudo", "apt-get", "update"])
+                    res = subprocess.run(["sudo", "apt-get", "install", "-y", "podman"])
+                    if res.returncode != 0:
+                        print("Failed to install podman. Please install it manually.")
+                        sys.exit(1)
+                    print("✓ Podman installed successfully.")
+
+                if missing_ansible or ansible_version_low:
+                    if not shutil.which("pip") and not shutil.which("pip3"):
+                        print("\nInstalling pip for Python...")
+                        subprocess.run(["sudo", "apt-get", "update"])
+                        res = subprocess.run(["sudo", "apt-get", "install", "-y", "python3-pip"])
+                        if res.returncode != 0:
+                            print("Failed to install pip. Please install it manually.")
+                            sys.exit(1)
+
+                    print("\nInstalling/Upgrading Ansible...")
+                    res = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "ansible"])
+                    if res.returncode != 0:
+                        res = subprocess.run(["pip", "install", "--upgrade", "ansible"])
+                        if res.returncode != 0:
+                            print("Failed to install/upgrade Ansible. Please run: pip install ansible")
+                            sys.exit(1)
+                    print("✓ Ansible installed/upgraded successfully.")
+
+                print("\nAll missing dependencies installed successfully! Please re-run the command.")
+                sys.exit(0)
+            else:
+                print("\nInstallation declined.")
+                sys.exit(1)
+        else:
+            print("\nTo install missing dependencies automatically, run the tool with the --auto-install flag.")
+            sys.exit(1)
 
     print("Proceeding...\n")
 
@@ -256,7 +306,7 @@ def handle_status():
 # -------------------------
 # CLI PARSER
 # -------------------------
-args = sys.argv[1:]
+args = [x for x in sys.argv[1:] if x != "--auto-install"]
 
 # Must run before anything else
 check_prerequisites()
