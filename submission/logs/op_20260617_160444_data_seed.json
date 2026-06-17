@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-06-17T16:04:44.030202",
+  "command": "data seed",
+  "status": "SUCCESS",
+  "nodes": [
+    "redis-node-1",
+    "redis-node-2",
+    "redis-node-3",
+    "redis-node-4",
+    "redis-node-5",
+    "redis-node-6"
+  ],
+  "actions_taken": [
+    "Seed 1000 keys into cluster"
+  ],
+  "outcome": {
+    "returncode": 0,
+    "keys_seeded": 1000
+  }
+}

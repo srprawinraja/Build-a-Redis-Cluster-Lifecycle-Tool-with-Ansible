@@ -2,4 +2,487 @@
 ✓ Ansible 2.17.14 found
 Proceeding...
 
-All nodes are already at version 7.2.6. Upgrade is a no-op.
+
+Starting Rolling Upgrade → Redis 7.2.6
+
+
+PLAY [redis-node-1] ****************************************************************************************************************************************
+
+TASK [PRE-FLIGHT | Verify cluster is healthy] **************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [PRE-FLIGHT | Get current Redis version] **************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [PRE-FLIGHT | Fail if already at target version] ******************************************************************************************************
+skipping: [redis-node-1]
+
+TASK [PRE-FLIGHT | Show versions] **************************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "Current version : 7.0.15",
+        "Target  version : 7.2.6",
+        "Cluster health  : ok",
+        "Starting rolling upgrade..."
+    ]
+}
+
+TASK [PRE-FLIGHT | Data integrity baseline (pre-upgrade verify)] *******************************************************************************************
+changed: [redis-node-1]
+
+TASK [PRE-FLIGHT | Show baseline result] *******************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "PRE-UPGRADE VERIFY: PASS — 1000/1000 keys verified"
+    ]
+}
+
+PLAY [redis-node-1] ****************************************************************************************************************************************
+
+TASK [DISCOVER | Get cluster nodes] ************************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [DISCOVER | Build replica host list] ******************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [DISCOVER | Register replicas in dynamic group] *******************************************************************************************************
+changed: [redis-node-1] => (item=redis-node-3)
+changed: [redis-node-1] => (item=redis-node-6)
+changed: [redis-node-1] => (item=redis-node-5)
+
+TASK [DISCOVER | Build master-to-replica mapping] **********************************************************************************************************
+changed: [redis-node-1]
+
+TASK [DISCOVER | Register masters in dynamic group] ********************************************************************************************************
+changed: [redis-node-1] => (item=redis-node-1 redis-node-5)
+changed: [redis-node-1] => (item=redis-node-2 redis-node-6)
+changed: [redis-node-1] => (item=redis-node-4 redis-node-3)
+
+PLAY [upgrade_replicas] ************************************************************************************************************************************
+
+TASK [[REPLICA] Stop Redis] ********************************************************************************************************************************
+changed: [redis-node-3]
+
+TASK [[REPLICA] Wait for Redis to stop] ********************************************************************************************************************
+ok: [redis-node-3]
+
+TASK [[REPLICA] Install & Start Redis 7.2.6 via role] ******************************************************************************************************
+included: redis for redis-node-3
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-3]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-3]
+
+TASK [[REPLICA] Wait for Redis to start] *******************************************************************************************************************
+ok: [redis-node-3]
+
+TASK [[REPLICA] Wait for cluster to return to ok] **********************************************************************************************************
+changed: [redis-node-3 -> redis-node-1(localhost)]
+
+TASK [[REPLICA] Get node IP address] ***********************************************************************************************************************
+changed: [redis-node-3]
+
+TASK [[REPLICA] Progress report] ***************************************************************************************************************************
+ok: [redis-node-3] => {
+    "msg": "[1/6] Upgraded replica 10.10.0.13 — cluster: ok"
+}
+
+PLAY [upgrade_replicas] ************************************************************************************************************************************
+
+TASK [[REPLICA] Stop Redis] ********************************************************************************************************************************
+changed: [redis-node-6]
+
+TASK [[REPLICA] Wait for Redis to stop] ********************************************************************************************************************
+ok: [redis-node-6]
+
+TASK [[REPLICA] Install & Start Redis 7.2.6 via role] ******************************************************************************************************
+included: redis for redis-node-6
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-6]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-6]
+
+TASK [[REPLICA] Wait for Redis to start] *******************************************************************************************************************
+ok: [redis-node-6]
+
+TASK [[REPLICA] Wait for cluster to return to ok] **********************************************************************************************************
+changed: [redis-node-6 -> redis-node-1(localhost)]
+
+TASK [[REPLICA] Get node IP address] ***********************************************************************************************************************
+changed: [redis-node-6]
+
+TASK [[REPLICA] Progress report] ***************************************************************************************************************************
+ok: [redis-node-6] => {
+    "msg": "[2/6] Upgraded replica 10.10.0.16 — cluster: ok"
+}
+
+PLAY [upgrade_replicas] ************************************************************************************************************************************
+
+TASK [[REPLICA] Stop Redis] ********************************************************************************************************************************
+changed: [redis-node-5]
+
+TASK [[REPLICA] Wait for Redis to stop] ********************************************************************************************************************
+ok: [redis-node-5]
+
+TASK [[REPLICA] Install & Start Redis 7.2.6 via role] ******************************************************************************************************
+included: redis for redis-node-5
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-5]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-5]
+
+TASK [[REPLICA] Wait for Redis to start] *******************************************************************************************************************
+ok: [redis-node-5]
+
+TASK [[REPLICA] Wait for cluster to return to ok] **********************************************************************************************************
+changed: [redis-node-5 -> redis-node-1(localhost)]
+
+TASK [[REPLICA] Get node IP address] ***********************************************************************************************************************
+changed: [redis-node-5]
+
+TASK [[REPLICA] Progress report] ***************************************************************************************************************************
+ok: [redis-node-5] => {
+    "msg": "[3/6] Upgraded replica 10.10.0.15 — cluster: ok"
+}
+
+PLAY [upgrade_masters] *************************************************************************************************************************************
+
+TASK [[MASTER] Trigger CLUSTER FAILOVER on replica] ********************************************************************************************************
+changed: [redis-node-1 -> redis-node-5(localhost)]
+
+TASK [[MASTER] Wait for this node to become replica (failover complete)] ***********************************************************************************
+FAILED - RETRYING: [redis-node-1]: [MASTER] Wait for this node to become replica (failover complete) (15 retries left).
+FAILED - RETRYING: [redis-node-1]: [MASTER] Wait for this node to become replica (failover complete) (14 retries left).
+FAILED - RETRYING: [redis-node-1]: [MASTER] Wait for this node to become replica (failover complete) (13 retries left).
+FAILED - RETRYING: [redis-node-1]: [MASTER] Wait for this node to become replica (failover complete) (12 retries left).
+changed: [redis-node-1]
+
+TASK [[MASTER] Stop Redis (now a replica)] *****************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [[MASTER] Wait for Redis to stop] *********************************************************************************************************************
+ok: [redis-node-1]
+
+TASK [[MASTER] Install & Start Redis 7.2.6 via role] *******************************************************************************************************
+included: redis for redis-node-1
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-1]
+
+TASK [[MASTER] Wait for Redis to start] ********************************************************************************************************************
+ok: [redis-node-1]
+
+TASK [[MASTER] Wait for cluster to return to ok] ***********************************************************************************************************
+changed: [redis-node-1]
+
+TASK [[MASTER] Get node IP address] ************************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [[MASTER] Progress report] ****************************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": "[4/6] Upgraded master 10.10.0.11 — cluster: ok"
+}
+
+PLAY [upgrade_masters] *************************************************************************************************************************************
+
+TASK [[MASTER] Trigger CLUSTER FAILOVER on replica] ********************************************************************************************************
+changed: [redis-node-2 -> redis-node-6(localhost)]
+
+TASK [[MASTER] Wait for this node to become replica (failover complete)] ***********************************************************************************
+changed: [redis-node-2]
+
+TASK [[MASTER] Stop Redis (now a replica)] *****************************************************************************************************************
+changed: [redis-node-2]
+
+TASK [[MASTER] Wait for Redis to stop] *********************************************************************************************************************
+ok: [redis-node-2]
+
+TASK [[MASTER] Install & Start Redis 7.2.6 via role] *******************************************************************************************************
+included: redis for redis-node-2
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-2]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-2]
+
+TASK [[MASTER] Wait for Redis to start] ********************************************************************************************************************
+ok: [redis-node-2]
+
+TASK [[MASTER] Wait for cluster to return to ok] ***********************************************************************************************************
+changed: [redis-node-2 -> redis-node-1(localhost)]
+
+TASK [[MASTER] Get node IP address] ************************************************************************************************************************
+changed: [redis-node-2]
+
+TASK [[MASTER] Progress report] ****************************************************************************************************************************
+ok: [redis-node-2] => {
+    "msg": "[5/6] Upgraded master 10.10.0.12 — cluster: ok"
+}
+
+PLAY [upgrade_masters] *************************************************************************************************************************************
+
+TASK [[MASTER] Trigger CLUSTER FAILOVER on replica] ********************************************************************************************************
+changed: [redis-node-4 -> redis-node-3(localhost)]
+
+TASK [[MASTER] Wait for this node to become replica (failover complete)] ***********************************************************************************
+changed: [redis-node-4]
+
+TASK [[MASTER] Stop Redis (now a replica)] *****************************************************************************************************************
+changed: [redis-node-4]
+
+TASK [[MASTER] Wait for Redis to stop] *********************************************************************************************************************
+ok: [redis-node-4]
+
+TASK [[MASTER] Install & Start Redis 7.2.6 via role] *******************************************************************************************************
+included: redis for redis-node-4
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 binary already compiled] ***********************************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Download Redis 7.2.6] ***********************************************************************************************************
+skipping: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Extract Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Compile Redis 7.2.6] ************************************************************************************************************
+skipping: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Check if Redis 7.2.6 is already installed in /usr/local/bin] ********************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Install Redis 7.2.6 binaries to /usr/local/bin] *********************************************************************************
+changed: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Ensure config directory exists] *************************************************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Ensure data directory exists] ***************************************************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Write redis.conf from template] *************************************************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Check if Redis is running] ******************************************************************************************************
+ok: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Start Redis] ********************************************************************************************************************
+changed: [redis-node-4]
+
+TASK [redis : REDIS ROLE | Wait for Redis to be ready on port 6379] ****************************************************************************************
+ok: [redis-node-4]
+
+TASK [[MASTER] Wait for Redis to start] ********************************************************************************************************************
+ok: [redis-node-4]
+
+TASK [[MASTER] Wait for cluster to return to ok] ***********************************************************************************************************
+changed: [redis-node-4 -> redis-node-1(localhost)]
+
+TASK [[MASTER] Get node IP address] ************************************************************************************************************************
+changed: [redis-node-4]
+
+TASK [[MASTER] Progress report] ****************************************************************************************************************************
+ok: [redis-node-4] => {
+    "msg": "[6/6] Upgraded master 10.10.0.14 — cluster: ok"
+}
+
+PLAY [redis-node-1] ****************************************************************************************************************************************
+
+TASK [POST | Verify all nodes are on new version] **********************************************************************************************************
+changed: [redis-node-1]
+
+TASK [POST | Show version check] ***************************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "VERSION CHECK",
+        "  10.10.0.15:6379  [master]  v7.2.6",
+        "  10.10.0.16:6379  [master]  v7.2.6",
+        "  10.10.0.13:6379  [master]  v7.2.6",
+        "  10.10.0.14:6379  [slave]  v7.2.6",
+        "  10.10.0.11:6379  [slave]  v7.2.6",
+        "  10.10.0.12:6379  [slave]  v7.2.6"
+    ]
+}
+
+TASK [POST | Data integrity verify] ************************************************************************************************************************
+changed: [redis-node-1]
+
+TASK [POST | Show data integrity result] *******************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "PASS — 1000/1000 keys verified"
+    ]
+}
+
+TASK [POST | Upgrade complete] *****************************************************************************************************************************
+ok: [redis-node-1] => {
+    "msg": "UPGRADE COMPLETE — all nodes on v7.2.6, data integrity verified"
+}
+
+PLAY RECAP *************************************************************************************************************************************************
+redis-node-1               : ok=33   changed=17   unreachable=0    failed=0    skipped=4    rescued=0    ignored=0
+redis-node-2               : ok=18   changed=7    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
+redis-node-3               : ok=16   changed=5    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
+redis-node-4               : ok=18   changed=7    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
+redis-node-5               : ok=16   changed=5    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
+redis-node-6               : ok=16   changed=5    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0

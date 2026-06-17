@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-06-17T15:32:06.936699",
+  "command": "status",
+  "status": "SUCCESS",
+  "nodes": [
+    "redis-node-1",
+    "redis-node-2",
+    "redis-node-3",
+    "redis-node-4",
+    "redis-node-5",
+    "redis-node-6"
+  ],
+  "actions_taken": [
+    "Fetch cluster health and topology"
+  ],
+  "outcome": {
+    "returncode": 0
+  }
+}

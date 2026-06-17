@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-06-17T16:08:12.088959",
+  "command": "rollback",
+  "status": "SUCCESS",
+  "nodes": [
+    "redis-node-1",
+    "redis-node-2",
+    "redis-node-3",
+    "redis-node-4",
+    "redis-node-5",
+    "redis-node-6"
+  ],
+  "actions_taken": [
+    "Rollback cluster to version 7.0.15"
+  ],
+  "outcome": {
+    "playbook_returncode": 0,
+    "keys_restored": 1000,
+    "keys_verified": 1000,
+    "missing_keys": 0,
+    "mismatched_keys": 0
+  }
+}
