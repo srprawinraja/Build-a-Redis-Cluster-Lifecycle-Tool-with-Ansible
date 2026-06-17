@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-06-17T15:12:00.865941",
+  "command": "data verify",
+  "status": "SUCCESS",
+  "nodes": [
+    "redis-node-1",
+    "redis-node-2",
+    "redis-node-3",
+    "redis-node-4",
+    "redis-node-5",
+    "redis-node-6"
+  ],
+  "actions_taken": [
+    "Verify cluster key hashes against expected SHA256"
+  ],
+  "outcome": {
+    "returncode": 0
+  }
+}

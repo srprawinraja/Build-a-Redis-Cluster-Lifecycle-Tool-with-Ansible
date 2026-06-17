@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-06-17T14:55:41.565770",
+  "command": "provision",
+  "status": "FAILED",
+  "nodes": [
+    "redis-node-1",
+    "redis-node-2",
+    "redis-node-3",
+    "redis-node-4",
+    "redis-node-5",
+    "redis-node-6"
+  ],
+  "actions_taken": [
+    "Provision Redis cluster version 7.0.15"
+  ],
+  "outcome": {
+    "returncode": 2,
+    "version": "7.0.15",
+    "masters": "3",
+    "replicas_per_master": "1"
+  }
+}

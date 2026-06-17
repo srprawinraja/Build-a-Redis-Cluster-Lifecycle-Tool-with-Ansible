@@ -124,5 +124,452 @@
     "outcome": {
       "returncode": 0
     }
+  },
+  {
+    "timestamp": "2026-06-16T18:46:00.733100",
+    "command": "status",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6",
+      "redis-node-7",
+      "redis-node-8"
+    ],
+    "actions_taken": [
+      "Fetch cluster health and topology"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T14:54:04.636650",
+    "command": "provision",
+    "status": "FAILED",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Provision Redis cluster version 7.0.15"
+    ],
+    "outcome": {
+      "returncode": 2,
+      "version": "7.0.15",
+      "masters": "3",
+      "replicas_per_master": "1"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T14:55:41.565770",
+    "command": "provision",
+    "status": "FAILED",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Provision Redis cluster version 7.0.15"
+    ],
+    "outcome": {
+      "returncode": 2,
+      "version": "7.0.15",
+      "masters": "3",
+      "replicas_per_master": "1"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:08:14.735129",
+    "command": "provision",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Provision Redis cluster version 7.0.15"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "version": "7.0.15",
+      "masters": "3",
+      "replicas_per_master": "1"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:11:08.438184",
+    "command": "data verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Verify cluster key hashes against expected SHA256"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:11:29.900428",
+    "command": "data seed",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Seed 1000 keys into cluster"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "keys_seeded": 1000
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:12:00.865941",
+    "command": "data verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Verify cluster key hashes against expected SHA256"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:12:25.485986",
+    "command": "status",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Fetch cluster health and topology"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:28:57.309880",
+    "command": "upgrade",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rolling upgrade of cluster to version 7.2.6"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "target_version": "7.2.6"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:32:06.936699",
+    "command": "status",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Fetch cluster health and topology"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:32:25.128769",
+    "command": "upgrade",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rolling upgrade check to version 7.2.6 (no-op)"
+    ],
+    "outcome": {
+      "msg": "No-op. All nodes already at target version",
+      "version": "7.2.6"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T15:32:45.676419",
+    "command": "rollback",
+    "status": "FAILED",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rollback cluster to version 7.0.15"
+    ],
+    "outcome": {
+      "playbook_returncode": 0,
+      "keys_restored": 1000,
+      "keys_verified": 1000,
+      "missing_keys": 1000,
+      "mismatched_keys": 0,
+      "error": "Data verification failed"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:03:35.750565",
+    "command": "data verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Verify cluster key hashes against expected SHA256"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:04:27.136399",
+    "command": "provision",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Provision Redis cluster version 7.0.15"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "version": "7.0.15",
+      "masters": "3",
+      "replicas_per_master": "1"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:04:32.889234",
+    "command": "status",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Fetch cluster health and topology"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:04:44.030202",
+    "command": "data seed",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Seed 1000 keys into cluster"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "keys_seeded": 1000
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:05:10.294770",
+    "command": "data verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Verify cluster key hashes against expected SHA256"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:05:58.648420",
+    "command": "upgrade",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rolling upgrade of cluster to version 7.2.6"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "target_version": "7.2.6"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:06:30.814021",
+    "command": "data verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Verify cluster key hashes against expected SHA256"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:08:12.088959",
+    "command": "rollback",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rollback cluster to version 7.0.15"
+    ],
+    "outcome": {
+      "playbook_returncode": 0,
+      "keys_restored": 1000,
+      "keys_verified": 1000,
+      "missing_keys": 0,
+      "mismatched_keys": 0
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:10:57.082349",
+    "command": "upgrade",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Rolling upgrade of cluster to version 7.2.6"
+    ],
+    "outcome": {
+      "returncode": 0,
+      "target_version": "7.2.6"
+    }
+  },
+  {
+    "timestamp": "2026-06-17T16:33:03.520092",
+    "command": "verify",
+    "status": "SUCCESS",
+    "nodes": [
+      "redis-node-1",
+      "redis-node-2",
+      "redis-node-3",
+      "redis-node-4",
+      "redis-node-5",
+      "redis-node-6"
+    ],
+    "actions_taken": [
+      "Run comprehensive post-upgrade verification"
+    ],
+    "outcome": {
+      "returncode": 0
+    }
   }
 ]
